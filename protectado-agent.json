@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "name": "protectado-agent",
+    "version": "1.0.0",
+    "description": "Protectado — agent de supervision réseau"
+  },
+  "security": {
+    "groups": ["python_runtime"]
+  },
+  "filesystem": {
+    "allow": [
+      "__WORKDIR__/data",
+      "/tmp/fw-queue"
+    ]
+  },
+  "network": {
+    "network_profile": "minimal",
+    "allow_domain": [
+      "openrouter.ai",
+      "cloudflare-dns.com",
+      "security.cloudflare-dns.com",
+      "family.cloudflare-dns.com"
+    ],
+    "open_port": [80, 81, 8080]
+  },
+  "interactive": false
+}

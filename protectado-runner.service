@@ -1,0 +1,15 @@
+[Unit]
+Description=Protectado — Action Runner (privilégié, hors sandbox)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=__WORKDIR__
+ExecStart=__WORKDIR__/.venv/bin/python action_runner.py
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

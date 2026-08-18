@@ -1,0 +1,22 @@
+[Unit]
+Description=Protectado — Agent IA (nono sandbox)
+After=network.target pihole-FTL.service protectado-runner.service
+Requires=protectado-runner.service
+
+[Service]
+Type=simple
+User=__USER__
+# Accès en écriture à la file d'actions (/tmp/fw-queue, root:protectado-queue 2770).
+# Déclaré ICI et pas seulement via « usermod -aG » : les groupes supplémentaires sont
+# fixés au démarrage du processus, donc un boîtier mis à jour sans nouvelle session
+# n'héritait pas du groupe et le dashboard ne pouvait plus rien mettre en file
+# (assistant bloqué sur « recherche des réseaux » sans aucune erreur visible).
+SupplementaryGroups=protectado-queue
+WorkingDirectory=__WORKDIR__
+ExecStart=nono run --read __WORKDIR__ --profile /etc/protectado/agent.json -- __WORKDIR__/.venv/bin/python dashboard.py
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

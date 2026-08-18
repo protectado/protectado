@@ -1,0 +1,2194 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ t['app.name'] }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ---- Header ---- */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      border-bottom: 1px solid #1e293b;
+      position: sticky;
+      top: 0;
+      background: #0f172a;
+      z-index: 10;
+    }
+    .header-left h1 { font-size: 1.2rem; font-weight: 700; color: #f8fafc; }
+    .header-left .subtitle { color: #64748b; font-size: 0.78rem; margin-top: 2px; }
+    .logout-btn {
+      background: transparent;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .logout-btn:hover { border-color: #64748b; color: #e2e8f0; }
+
+    /* ---- Tabs ---- */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      padding: 0 24px;
+      border-bottom: 1px solid #1e293b;
+      background: #0f172a;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #64748b;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: -1px;
+    }
+    .tab-btn:hover { color: #94a3b8; }
+    .tab-btn.active { color: #e2e8f0; border-bottom-color: #3b82f6; }
+
+    /* ---- Content ---- */
+    .tab-content { padding: 24px; }
+
+    /* ---- Cards ---- */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title { font-size: 1rem; font-weight: 600; }
+    .age { color: #64748b; font-size: 0.8rem; }
+
+    /* ---- Status dots ---- */
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .online  { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+    .offline { background: #475569; }
+    .warning { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+
+    /* ---- Badges ---- */
+    .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 9999px; font-weight: 500; }
+    .badge-red    { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+    .badge-green  { background: #052e16; color: #4ade80; border: 1px solid #14532d; }
+    .badge-yellow { background: #451a03; color: #fbbf24; border: 1px solid #78350f; }
+    .badge-blue   { background: #0c1a4b; color: #60a5fa; border: 1px solid #1e3a8a; }
+
+    /* ---- Stat rows ---- */
+    .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1e3a5f22; font-size: 0.875rem; }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { color: #94a3b8; }
+    .stat-value { font-weight: 500; }
+    .takeover-badge { background: #431407; border: 1px solid #c2410c; border-radius: 8px; padding: 8px 12px; font-size: 0.8rem; color: #fb923c; margin-top: 12px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .btn-takeover { background:#1d4ed8; color:#fff; border:none; border-radius:6px; padding:5px 12px; font-size:0.75rem; cursor:pointer; }
+    .btn-release  { background:#374151; color:#d1d5db; border:none; border-radius:6px; padding:5px 12px; font-size:0.75rem; cursor:pointer; }
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:#1e293b; border:1px solid #334155; border-radius:12px; padding:24px; width:340px; max-width:90vw; }
+    .modal-title { font-weight:600; font-size:1rem; margin-bottom:16px; }
+    .modal-field { margin-bottom:12px; }
+    .modal-field label { display:block; font-size:0.78rem; color:#94a3b8; margin-bottom:4px; }
+    .modal-field input, .modal-field select { width:100%; background:#0f172a; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:7px 10px; font-size:0.85rem; box-sizing:border-box; }
+    .modal-actions { display:flex; gap:8px; margin-top:16px; justify-content:flex-end; }
+
+    /* ---- Events ---- */
+    .event-list { max-height: 200px; overflow-y: auto; }
+    .event-item { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid #1e293b; font-size: 0.8rem; }
+    .event-time { color: #475569; white-space: nowrap; }
+    .event-profile { font-weight: 500; min-width: 50px; }
+    .event-msg { color: #94a3b8; }
+    .event-info .event-profile         { color: #60a5fa; }
+    .event-warning .event-profile      { color: #fbbf24; }
+    .event-alert .event-profile        { color: #f87171; }
+    .event-block_device .event-profile { color: #f87171; }
+    .event-unblock_device .event-profile { color: #4ade80; }
+
+    /* ---- Chat ---- */
+    .chat-messages { height: 220px; overflow-y: auto; padding: 12px; background: #0f172a; border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { max-width: 85%; padding: 10px 14px; border-radius: 10px; font-size: 0.875rem; line-height: 1.5; }
+    .msg-user  { background: #1d4ed8; color: #eff6ff; align-self: flex-end; border-bottom-right-radius: 2px; }
+    .msg-agent { background: #1e293b; color: #e2e8f0; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #334155; }
+    .msg-thinking { color: #475569; font-style: italic; }
+    .chat-input-row { display: flex; gap: 8px; }
+    .chat-input-row input { flex: 1; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 10px 14px; border-radius: 8px; font-size: 0.875rem; outline: none; }
+    .chat-input-row input:focus { border-color: #3b82f6; }
+    .chat-input-row button { background: #3b82f6; color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 500; }
+    .chat-input-row button:hover { background: #2563eb; }
+    .chat-input-row button:disabled { background: #334155; cursor: default; }
+
+    /* ---- AI offline state ---- */
+    .ai-off-badge {
+      font-size: 0.68rem; padding: 2px 8px; border-radius: 9999px;
+      background: #1e293b; color: #64748b; border: 1px solid #334155;
+      font-weight: 500;
+    }
+    .ai-disabled-area {
+      opacity: 0.45;
+      pointer-events: none;
+      user-select: none;
+    }
+    .ai-notice {
+      font-size: 0.78rem; color: #64748b;
+      background: #0f172a; border: 1px solid #1e293b;
+      border-radius: 8px; padding: 10px 14px;
+      margin-bottom: 10px;
+    }
+
+    /* ---- Management tab forms ---- */
+    .form-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 16px; }
+    .form-field { display: flex; flex-direction: column; gap: 4px; }
+    .form-field label { font-size: 0.75rem; color: #94a3b8; }
+    .form-field select,
+    .form-field input[type="text"],
+    .form-field input[type="date"] {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      outline: none;
+    }
+    .form-field select:focus,
+    .form-field input:focus { border-color: #3b82f6; }
+
+    .btn-primary { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 500; white-space: nowrap; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-danger  { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+    .btn-danger:hover  { background: #7f1d1d; }
+    .btn-edit    { background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+    .btn-edit:hover    { color: #e2e8f0; border-color: #64748b; }
+    .btn-save    { background: #052e16; color: #4ade80; border: 1px solid #14532d; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+    .btn-save:hover    { background: #14532d; }
+    .btn-cancel  { background: #1e293b; color: #64748b; border: 1px solid #334155; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+    .btn-cancel:hover  { color: #94a3b8; }
+
+    /* ---- Schedule cards ---- */
+    .schedule-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .schedule-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 14px; }
+    .sc-name { font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
+    .sc-mode { font-size: 0.85rem; }
+    .sc-time { color: #475569; font-size: 0.75rem; margin-top: 4px; }
+
+    /* ---- Domain filters ---- */
+    .domain-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+
+    /* ---- Rapports ---- */
+    .report-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 12px;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .report-card.fading { opacity: 0; transform: translateX(24px); pointer-events: none; }
+    .report-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
+    .report-card-title { font-weight: 600; font-size: 0.95rem; }
+    .report-card-date { color: #64748b; font-size: 0.8rem; font-weight: 400; }
+    .report-card-body { color: #94a3b8; font-size: 0.875rem; line-height: 1.7; max-height: 220px; overflow-y: auto; }
+    .btn-ack { background: #052e16; color: #4ade80; border: 1px solid #14532d; padding: 5px 14px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-weight: 500; white-space: nowrap; flex-shrink: 0; }
+    .btn-ack:hover { background: #14532d; }
+
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+      .form-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-left">
+      <h1>🛡️ {{ t['app.name'] }}</h1>
+      <p class="subtitle" id="last-update">{{ t['dashboard.loading'] }}</p>
+    </div>
+    <form id="logout-form" action="/logout" method="POST" style="display:none"></form>
+    <button class="logout-btn" onclick="document.getElementById('logout-form').submit()">{{ t['nav.logout'] }}</button>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="btn-dashboard"  onclick="switchTab('dashboard')">📊 {{ t['nav.dashboard'] }}</button>
+    <button class="tab-btn" id="btn-gestion"    onclick="switchTab('gestion')">⚙️ {{ t['nav.manage'] }}</button>
+    <a class="tab-btn" href="/devices" style="text-decoration:none">📱 {{ t['nav.devices'] }}</a>
+    <button class="tab-btn" id="btn-profils"    onclick="switchTab('profils')">👥 {{ t['nav.profiles'] }}</button>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- Accompagnement parents non techniques : bannière + visite guidée  -->
+  <!-- ================================================================ -->
+  <style>
+    .welcome-banner { display:flex; flex-wrap:wrap; gap:14px; align-items:center;
+      justify-content:space-between; margin:0 0 22px; padding:16px 18px; border-radius:14px;
+      background:linear-gradient(135deg,#1e3a5f,#1e293b); border:1px solid #38bdf8; }
+    .welcome-banner .wb-text b { display:block; font-size:1.05rem; margin-bottom:2px; color:#e2e8f0; }
+    .welcome-banner .wb-text span { color:#cbd5e1; font-size:0.88rem; }
+    .welcome-banner .wb-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .wb-primary { background:#38bdf8; color:#04283a; border:0; padding:11px 16px; border-radius:9px;
+      font-weight:700; font-size:0.9rem; cursor:pointer; }
+    .wb-ghost { background:transparent; color:#7dd3fc; border:1px solid #334155; padding:11px 14px;
+      border-radius:9px; font-size:0.85rem; cursor:pointer; }
+    .tour-overlay { position:fixed; inset:0; background:rgba(2,6,23,.82); z-index:1000;
+      display:flex; align-items:center; justify-content:center; padding:18px; }
+    .tour-card { background:#1e293b; border:1px solid #334155; border-radius:16px; max-width:440px;
+      width:100%; padding:26px 24px 20px; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.5); }
+    .tour-emoji { font-size:2.6rem; line-height:1; margin-bottom:10px; }
+    .tour-card h2 { margin:0 0 8px; font-size:1.3rem; color:#e2e8f0; }
+    .tour-card p { margin:0 0 18px; color:#94a3b8; font-size:0.95rem; line-height:1.6; }
+    .tour-dots { display:flex; gap:6px; justify-content:center; margin-bottom:18px; }
+    .tour-dots i { width:8px; height:8px; border-radius:50%; background:#334155; display:inline-block; }
+    .tour-dots i.on { background:#38bdf8; }
+    .tour-nav { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .tour-right { display:flex; gap:8px; }
+    .tour-skip { background:transparent; color:#64748b; border:0; font-size:0.85rem; cursor:pointer; padding:8px; }
+    .tour-ghost { background:transparent; color:#94a3b8; border:1px solid #334155; padding:10px 14px;
+      border-radius:9px; font-size:0.88rem; cursor:pointer; }
+    .tour-primary { background:#38bdf8; color:#04283a; border:0; padding:10px 18px; border-radius:9px;
+      font-weight:700; font-size:0.88rem; cursor:pointer; }
+  </style>
+
+  <div id="tour-overlay" class="tour-overlay" style="display:none">
+    <div class="tour-card">
+      <div class="tour-emoji" id="tour-emoji">🛡️</div>
+      <h2 id="tour-title">Bienvenue</h2>
+      <p id="tour-body"></p>
+      <div class="tour-dots" id="tour-dots"></div>
+      <div class="tour-nav">
+        <button class="tour-skip" onclick="closeTour()">{{ t['tour.nav.skip'] }}</button>
+        <div class="tour-right">
+          <button class="tour-ghost" id="tour-prev" onclick="tourPrev()">{{ t['tour.nav.prev'] }}</button>
+          <button class="tour-primary" id="tour-next" onclick="tourNext()">{{ t['tour.nav.next'] }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- Tab 1 : Dashboard                                                 -->
+  <!-- ================================================================ -->
+  <div class="tab-content" id="tab-dashboard">
+
+    <!-- Bienvenue (affichée tant qu'aucun profil enfant n'existe) -->
+    <div id="welcome-banner" class="welcome-banner" style="display:none">
+      <div class="wb-text">
+        <b>{{ t['tour.banner.title'] }}</b>
+        <span>{{ t['tour.banner.text'] }}</span>
+      </div>
+      <div class="wb-actions">
+        <button class="wb-primary" onclick="startProfileCreation()">{{ t['tour.banner.create'] }}</button>
+        <button class="wb-ghost" onclick="openTour()">{{ t['tour.banner.replay'] }}</button>
+      </div>
+    </div>
+
+    <!-- Rapports non lus -->
+    <div id="reports-section" style="display:none;margin-bottom:24px">
+      <div id="reports-list"></div>
+    </div>
+
+    <!-- Nouveaux appareils détectés → proposer une affectation -->
+    <div id="new-devices-section" class="card" style="display:none;margin-bottom:24px;border-color:#38bdf8">
+      <div class="card-header">
+        <span class="card-title">📶 {{ t['devices.new_title'] }}</span>
+      </div>
+      <p style="color:#94a3b8;font-size:0.82rem;margin:0 0 6px">{{ t['devices.new_desc'] }}</p>
+      <p id="new-devices-grace-note" style="display:none;color:#64748b;font-size:0.78rem;margin:0 0 12px"></p>
+      <div id="new-devices-list"></div>
+    </div>
+
+    <div class="grid" id="profiles-grid"></div>
+
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header">
+        <span class="card-title">📋 {{ t['dashboard.report.title'] }} <span id="report-ai-badge" style="display:none" class="ai-off-badge">{{ t['dashboard.ai.off_badge'] }}</span></span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="report-date" style="color:#64748b;font-size:0.8rem"></span>
+          <button id="report-generate-btn" class="btn-edit" style="font-size:0.75rem" onclick="generateReport()">{{ t['dashboard.report.generate_btn'] }}</button>
+        </div>
+      </div>
+      <div id="report-ai-notice" style="display:none" class="ai-notice">{{ t['dashboard.ai.no_key_report'] }}</div>
+      <div id="report-content" style="color:#94a3b8;font-size:0.875rem;line-height:1.7;max-height:300px;overflow-y:auto">{{ t['dashboard.loading'] }}</div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header">
+        <span class="card-title">💬 {{ t['dashboard.chat.title'] }} <span id="chat-ai-badge" style="display:none" class="ai-off-badge">{{ t['dashboard.ai.off_badge'] }}</span></span>
+      </div>
+      <div id="chat-ai-notice" style="display:none" class="ai-notice">
+        <span id="chat-ai-notice-msg">{{ t['dashboard.ai.no_key_chat'] }}</span>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="ai-key-input"
+            placeholder="{{ t['dashboard.ai.key_placeholder'] }}"
+            style="flex:1;min-width:180px;background:#1e293b;border:1px solid #475569;color:#e2e8f0;padding:7px 10px;border-radius:6px;font-size:0.8rem;outline:none"
+            onkeydown="if(event.key==='Enter')saveAiKey()">
+          <button onclick="saveAiKey()" style="background:#3b82f6;color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:0.8rem;font-weight:500;cursor:pointer;white-space:nowrap">{{ t['dashboard.ai.key_save_btn'] }}</button>
+        </div>
+        <span id="ai-key-save-status" style="display:block;font-size:0.75rem;margin-top:6px"></span>
+      </div>
+      <div id="chat-area">
+        <div class="chat-messages" id="chat-messages">
+          <div class="msg msg-agent">{{ t['dashboard.chat.welcome'] }}</div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chat-input" placeholder="{{ t['dashboard.chat.placeholder'] }}">
+          <button id="send-btn" onclick="sendChat()">{{ t['dashboard.chat.send'] }}</button>
+          <button onclick="resetChat()" title="{{ t['dashboard.chat.reset'] }}" style="background:#334155;padding:10px 12px">↺</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">{{ t['dashboard.events.title'] }}</span>
+      </div>
+      <div class="event-list" id="events-list">
+        <p style="color:#475569;font-size:0.8rem">{{ t['dashboard.loading'] }}</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- Tab 2 : Gestion                                                   -->
+  <!-- ================================================================ -->
+  <div class="tab-content" id="tab-gestion" style="display:none">
+
+    <!-- Accès temporaire -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header">
+        <span class="card-title">⏱ {{ t['manage.temp.title'] }}</span>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>{{ t['manage.overrides.profile'] }}</label>
+          <select id="temp-profile"></select>
+        </div>
+        <div class="form-field">
+          <label>{{ t['manage.overrides.mode'] }}</label>
+          <select id="temp-mode">
+            <option value="permissive">{{ t['manage.temp.mode_permissive'] }}</option>
+            <option value="work">{{ t['manage.temp.mode_work'] }}</option>
+            <option value="blocked">{{ t['manage.temp.mode_blocked'] }}</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>{{ t['manage.temp.duration'] }}</label>
+          <select id="temp-minutes">
+            <option value="15">{{ t['manage.temp.dur_15'] }}</option>
+            <option value="30">{{ t['manage.temp.dur_30'] }}</option>
+            <option value="60" selected>{{ t['manage.temp.dur_60'] }}</option>
+            <option value="90">{{ t['manage.temp.dur_90'] }}</option>
+            <option value="120">{{ t['manage.temp.dur_120'] }}</option>
+          </select>
+        </div>
+        <button class="btn-primary" style="align-self:flex-end" onclick="addTempOverride()">{{ t['manage.temp.activate'] }}</button>
+      </div>
+      <div id="temp-overrides-list"></div>
+    </div>
+
+    <!-- Overrides planning -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header">
+        <span class="card-title">📅 {{ t['manage.overrides.title'] }}</span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>{{ t['manage.overrides.profile'] }}</label>
+          <select id="ov-profile"></select>
+        </div>
+        <div class="form-field">
+          <label>{{ t['manage.overrides.date'] }}</label>
+          <input type="date" id="ov-date">
+        </div>
+        <div class="form-field">
+          <label>{{ t['manage.overrides.mode'] }}</label>
+          <select id="ov-mode">
+            <option value="free">{{ t['mode.free_full'] }}</option>
+            <option value="work">{{ t['mode.work_full'] }}</option>
+            <option value="blocked">{{ t['mode.blocked_full'] }}</option>
+            <option value="normal">{{ t['mode.normal_full'] }}</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>{{ t['manage.overrides.reason_optional'] }}</label>
+          <input type="text" id="ov-reason" placeholder="{{ t['manage.overrides.reason_placeholder'] }}" style="min-width:160px">
+        </div>
+        <button class="btn-primary" style="align-self:flex-end" onclick="addOverride()">{{ t['manage.overrides.add_btn'] }}</button>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:0.8rem">
+          <thead>
+            <tr style="color:#64748b;text-align:left;border-bottom:1px solid #334155">
+              <th style="padding:6px 8px">{{ t['manage.overrides.profile'] }}</th>
+              <th style="padding:6px 8px">{{ t['manage.overrides.date'] }}</th>
+              <th style="padding:6px 8px">{{ t['manage.overrides.mode'] }}</th>
+              <th style="padding:6px 8px">{{ t['manage.overrides.reason'] }}</th>
+              <th style="padding:6px 8px"></th>
+            </tr>
+          </thead>
+          <tbody id="overrides-body">
+            <tr><td colspan="5" style="color:#475569;padding:12px 8px">{{ t['dashboard.loading'] }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mode actuel par profil -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header">
+        <span class="card-title">🗓️ {{ t['manage.schedule.title'] }}</span>
+        <!-- Le fuseau gouverne TOUS les horaires : il est affiché là où on les consulte,
+             pas dans un écran système que personne n'ouvre. -->
+        <span id="tz-line" style="font-size:0.75rem;color:#64748b">
+          <span>{{ t['manage.timezone.label'] }}</span>
+          <b id="tz-value">—</b>
+          <span id="tz-now"></span>
+          <button class="btn-edit" style="font-size:0.7rem;margin-left:6px" onclick="changeTimezone()">{{ t['manage.timezone.change'] }}</button>
+        </span>
+      </div>
+      <div class="schedule-grid" id="schedule-grid">
+        <p style="color:#475569;font-size:0.8rem">{{ t['dashboard.loading'] }}</p>
+      </div>
+    </div>
+
+    <!-- Domaines -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header">
+        <span class="card-title">🔍 {{ t['manage.domains.title'] }}</span>
+        <span id="managed-domains-count" style="color:#64748b;font-size:0.8rem"></span>
+      </div>
+      <div class="domain-filters" id="managed-domains-filters"></div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:0.8rem">
+          <thead>
+            <tr style="color:#64748b;text-align:left;border-bottom:1px solid #334155">
+              <th style="padding:6px 8px">{{ t['manage.domains.col_domain'] }}</th>
+              <th style="padding:6px 8px">{{ t['manage.domains.col_category'] }}</th>
+              <th style="padding:6px 8px;text-align:right">{{ t['manage.domains.col_hits'] }}</th>
+              <th style="padding:6px 8px;text-align:center">{{ t['manage.domains.col_blocked_work'] }}</th>
+              <th style="padding:6px 8px;text-align:center">{{ t['manage.domains.col_blocked_permissive'] }}</th>
+              <th style="padding:6px 8px"></th>
+            </tr>
+          </thead>
+          <tbody id="managed-domains-body">
+            <tr><td colspan="6" style="color:#475569;padding:12px 8px">{{ t['dashboard.loading'] }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mise à jour -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header">
+        <span class="card-title">🔄 {{ t['manage.update.title'] }}</span>
+      </div>
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:8px 0">
+        <p style="color:#94a3b8;font-size:0.8rem;margin:0;flex:1">{{ t['manage.update.desc'] }}</p>
+        <button class="btn-primary" id="btn-update" onclick="triggerUpdate()">{{ t['manage.update.btn'] }}</button>
+      </div>
+      <!-- Version installée : la première question posée à un parent qui signale un
+           problème. Lue localement dans data/version.json, aucune requête réseau. -->
+      <div id="version-line" style="margin-top:10px;font-size:0.75rem;color:#64748b">
+        <span>{{ t['manage.update.version'] }}</span>
+        <code id="version-commit" style="color:#94a3b8">—</code>
+        <span id="version-branch"></span>
+        <span id="version-date"></span>
+      </div>
+      <div id="update-status" style="display:none;margin-top:12px;font-size:0.8rem;color:#fcd34d"></div>
+      <pre id="update-log" style="display:none;margin-top:10px;background:#0f172a;border:1px solid #334155;border-radius:6px;padding:12px;font-size:0.72rem;color:#94a3b8;max-height:200px;overflow-y:auto;white-space:pre-wrap"></pre>
+    </div>
+
+    <!-- Vie privée : rétention + partage IA. Un parent doit pouvoir répondre à son
+         enfant qui demande « c'est gardé combien de temps ? » et « ça part où ? ». -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🔒 {{ t['manage.privacy.title'] }}</span>
+      </div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;padding:8px 0">
+        <div style="min-width:260px">
+          <label style="display:block;color:#94a3b8;font-size:0.8rem;margin-bottom:6px">{{ t['manage.privacy.retention_label'] }}</label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="retention-select" onchange="saveRetention()"
+              style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 9px;border-radius:6px;font-size:0.85rem"></select>
+            <button class="btn-edit" style="font-size:0.75rem" onclick="purgeNow()">{{ t['manage.privacy.purge_now'] }}</button>
+          </div>
+          <p id="retention-note" style="color:#f59e0b;font-size:0.75rem;margin:8px 0 0;max-width:330px"></p>
+          <p id="last-purge" style="color:#64748b;font-size:0.75rem;margin:6px 0 0"></p>
+        </div>
+        <div style="border-left:1px solid #334155;padding-left:24px;min-width:280px">
+          <label style="display:flex;gap:9px;align-items:center;cursor:pointer;font-size:0.85rem">
+            <input type="checkbox" id="share-ai" onchange="saveSharing()" style="accent-color:#6366f1;width:15px;height:15px">
+            <span>{{ t['manage.privacy.share_label'] }}</span>
+          </label>
+          <p style="color:#94a3b8;font-size:0.78rem;margin:8px 0 0;max-width:340px">{{ t['manage.privacy.share_hint'] }}</p>
+          <p id="share-off-note" style="color:#64748b;font-size:0.75rem;margin:6px 0 0;max-width:340px;display:none">{{ t['manage.privacy.share_off_note'] }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sauvegarde & Restauration -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">💾 {{ t['manage.backup.title'] }}</span>
+      </div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;padding:8px 0">
+        <div>
+          <p style="color:#94a3b8;font-size:0.8rem;margin:0 0 10px">{{ t['manage.backup.desc'] }}</p>
+          <button class="btn-primary" onclick="downloadBackup()">{{ t['manage.backup.download'] }}</button>
+          <p style="color:#f59e0b;font-size:0.75rem;margin:8px 0 0;max-width:320px">{{ t['manage.backup.secrets_warning'] }}</p>
+          <span id="backup-status" style="font-size:0.8rem;color:#64748b"></span>
+        </div>
+        <div style="border-left:1px solid #334155;padding-left:24px">
+          <p style="color:#94a3b8;font-size:0.8rem;margin:0 0 10px">{{ t['manage.restore.desc'] }}</p>
+          <div style="display:flex;gap:10px;align-items:center">
+            <input type="file" id="restore-file" accept=".zip" style="display:none" onchange="restoreBackup()">
+            <button class="btn-primary" onclick="document.getElementById('restore-file').click()">{{ t['manage.restore.btn'] }}</button>
+            <span id="restore-status" style="font-size:0.8rem;color:#64748b"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- Tab 4 : Profils                                                   -->
+  <!-- ================================================================ -->
+  <div class="tab-content" id="tab-profils" style="display:none">
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header">
+        <span class="card-title">👥 {{ t['profiles.title'] }}</span>
+        <button class="btn-primary" onclick="showNewProfileForm()">{{ t['profiles.new_btn'] }}</button>
+      </div>
+      <div id="new-profile-form" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid #334155">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+          <div class="form-field">
+            <label>{{ t['profiles.name_label'] }}</label>
+            <input type="text" id="np-name" placeholder="Lucas" style="min-width:140px">
+          </div>
+          <div class="form-field">
+            <label>{{ t['profiles.age_label'] }}</label>
+            <input type="number" id="np-age" placeholder="—" min="1" max="99" style="width:70px">
+          </div>
+        </div>
+        <p style="font-size:0.82rem;color:#94a3b8;margin:18px 0 4px;font-weight:600">📅 {{ t['profiles.schedule_intro'] }}</p>
+        <p style="font-size:0.75rem;color:#64748b;margin:0 0 12px">
+          {{ t['profiles.uncovered_prefix'] }} <span style="color:#f87171;font-weight:600">{{ t['profiles.uncovered_blocked'] }}</span>.
+        </p>
+        <div id="np-tpl-rows"></div>
+        <button class="btn-edit" style="font-size:0.75rem" onclick="addTemplate('__new__')">{{ t['profiles.add_slot'] }}</button>
+        <div id="np-error" class="msg no" style="display:none;margin-top:8px"></div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button class="btn-primary" onclick="createProfile()">{{ t['profiles.create_btn'] }}</button>
+          <button class="btn-cancel" onclick="hideNewProfileForm()">{{ t['profiles.cancel_btn'] }}</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="profiles-list-ui"></div>
+
+    <div style="margin-top:16px">
+      <button class="btn-edit" onclick="piholeSetup()" id="pihole-setup-btn">{{ t['profiles.pihole_btn'] }}</button>
+      <span id="pihole-setup-status" style="font-size:0.8rem;margin-left:10px;color:#64748b"></span>
+    </div>
+  </div>
+
+  <!-- Modal Takeover -->
+  <div class="modal-overlay" id="takeover-modal">
+    <div class="modal-box">
+      <div class="modal-title">{{ t['modal.takeover.title'] }}</div>
+      <input type="hidden" id="takeover-ip">
+      <div class="modal-field">
+        <label>{{ t['modal.takeover.duration'] }}</label>
+        <select id="takeover-duration">
+          <option value="30">{{ t['modal.takeover.30min'] }}</option>
+          <option value="60" selected>{{ t['modal.takeover.1h'] }}</option>
+          <option value="120">{{ t['modal.takeover.2h'] }}</option>
+          <option value="240">{{ t['modal.takeover.4h'] }}</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>{{ t['modal.takeover.password'] }}</label>
+        <input type="password" id="takeover-password" placeholder="••••••••">
+      </div>
+      <div id="takeover-error" style="color:#f87171;font-size:0.78rem;min-height:18px"></div>
+      <div class="modal-actions">
+        <button class="btn-release" onclick="closeTakeoverModal()">{{ t['modal.takeover.cancel'] }}</button>
+        <button class="btn-takeover" id="takeover-confirm-btn" onclick="confirmTakeover()">{{ t['modal.takeover.confirm'] }}</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ================================================================ //
+    //  Translations                                                     //
+    // ================================================================ //
+    const T = {{ t | tojson }};
+
+    function tr(key, vars = {}) {
+      let s = T[key] || key;
+      for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, v);
+      return s;
+    }
+
+    // Les réponses d'erreur de l'API portent un error_code stable (« invalid_ip »,
+    // « bad_password », …) EN PLUS d'un texte français destiné aux logs et au
+    // diagnostic. Le texte n'est plus affiché tel quel : il rendait le tableau de bord
+    // partiellement français pour une famille en/es/pt. On traduit le code ; le texte ne
+    // sert que de dernier recours si le boîtier renvoie un code que cette version ne
+    // connaît pas encore (mise à jour partielle).
+    function apiError(resp, fallbackKey) {
+      const code = resp && resp.error_code;
+      if (code) {
+        const k = 'error.' + code;
+        if (T[k] !== undefined) return tr(k, (resp && resp.error_params) || {});
+      }
+      if (fallbackKey && T[fallbackKey] !== undefined) return T[fallbackKey];
+      return (resp && resp.error) || T['error.generic'] || '';
+    }
+
+    // ================================================================ //
+    //  Constantes                                                       //
+    // ================================================================ //
+    const PROFILES_META = { monitoring: { emoji: "👁️" } };
+
+    const CATEGORY_COLORS = {
+      education:     { bg: '#052e16', text: '#4ade80', border: '#14532d' },
+      work:          { bg: '#0c1a4b', text: '#60a5fa', border: '#1e3a8a' },
+      entertainment: { bg: '#451a03', text: '#fbbf24', border: '#78350f' },
+      social:        { bg: '#2e1065', text: '#c084fc', border: '#581c87' },
+      adult:         { bg: '#450a0a', text: '#f87171', border: '#7f1d1d' },
+      cdn:           { bg: '#1e293b', text: '#64748b', border: '#334155' },
+      other:         { bg: '#1e293b', text: '#94a3b8', border: '#334155' },
+      unknown:       { bg: '#1e293b', text: '#475569', border: '#334155' },
+    };
+
+    const CATEGORIES = ['education', 'work', 'entertainment', 'social', 'adult', 'cdn', 'other', 'unknown'];
+
+    const MODE_LABELS = {
+      free: T['mode.free'], blocked: T['mode.blocked'], normal: T['mode.normal'],
+      work: T['mode.work'], permissive: T['mode.permissive']
+    };
+
+    // ================================================================ //
+    //  Utilitaires                                                      //
+    // ================================================================ //
+    // ================================================================ //
+    //  Échappement HTML — obligatoire pour TOUTE donnée venant de l'API //
+    // ================================================================ //
+    // Le tableau de bord construit son HTML par concaténation dans innerHTML. Les
+    // données affichées ne viennent pas toutes de nos formulaires : les hostnames et
+    // adresses MAC sont ANNONCÉS PAR LES APPAREILS eux-mêmes (DHCP → FTL), les noms de
+    // domaine viennent du trafic DNS, et les rapports viennent du LLM. Un appareil du
+    // réseau enfants qui annonce un hostname contenant du HTML exécutait donc du script
+    // dans la page authentifiée du parent — avec sa session, donc avec le droit d'appeler
+    // /api/devices/assign, /api/overrides, /api/ai/key ou /backup. Autrement dit :
+    // l'enfant reprenait la main sur son propre contrôle parental.
+    // Règle : aucune valeur issue de l'API n'atteint innerHTML sans passer par esc().
+    function esc(s) {
+      if (s === null || s === undefined) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Échappement pour une valeur insérée dans un attribut onclick="...('ICI')" —
+    // esc() neutralise déjà les guillemets, il reste l'antislash et les sauts de ligne.
+    function escAttrJs(s) {
+      return esc(String(s === null || s === undefined ? '' : s).replace(/\\/g, '\\\\'));
+    }
+
+    // renderMarkdown reçoit du texte produit par le LLM — lui-même exposé à l'injection
+    // de prompt via les noms de domaine qu'il analyse. On échappe AVANT d'appliquer les
+    // transformations Markdown : sinon la sortie du modèle est du HTML arbitraire.
+    function renderMarkdown(text) {
+      return esc(text)
+        .replace(/^---$/gm, '<hr style="border-color:#334155;margin:12px 0">')
+        .replace(/^### (.*$)/gm, '<h4 style="color:#e2e8f0;margin:12px 0 4px">$1</h4>')
+        .replace(/^## (.*$)/gm,  '<h3 style="color:#f1f5f9;margin:16px 0 6px">$1</h3>')
+        .replace(/^# (.*$)/gm,   '<h2 style="color:#f8fafc;margin:20px 0 8px">$1</h2>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^- (.*$)/gm, '<li style="margin:2px 0">$1</li>')
+        .replace(/\n/g, '<br>');
+    }
+
+    function categoryBadge(cat) {
+      const c = CATEGORY_COLORS[cat] || CATEGORY_COLORS.unknown;
+      return `<span style="font-size:0.7rem;padding:2px 7px;border-radius:9999px;background:${c.bg};color:${c.text};border:1px solid ${c.border}">${esc(cat)}</span>`;
+    }
+
+    // ================================================================ //
+    //  Navigation par onglets                                           //
+    // ================================================================ //
+    function switchTab(tab) {
+      ['dashboard','gestion','profils'].forEach(t => {
+        document.getElementById(`tab-${t}`).style.display = tab === t ? '' : 'none';
+        document.getElementById(`btn-${t}`).classList.toggle('active', tab === t);
+      });
+      if (tab === 'gestion') loadManagementTab();
+      if (tab === 'profils') loadProfiles();
+      if (tab === 'dashboard') { loadStatus(); loadEvents(); loadReport(); loadPendingReports(); loadPendingDevices(); }
+    }
+
+    // Variables d'état — déclarées ici pour être disponibles avant tout switchTab
+    let profilesData = {};
+    let editingProfile = null;
+    let scheduleData = {};
+    let domainsData  = [];
+    let activeMgmtFilter  = 'all';
+    let editingDomainIndex = null;
+    let _takeoverIps = [];
+    let _profileDeviceIps = {};   // clé de profil → IP de ses appareils (voir renderProfiles)
+    let netInfo = { enforcement: 'dns_only', kids_ssid: '' };
+
+    // Ouvre l'onglet indiqué dans ?tab= (retour depuis /devices)
+    const _tabParam = new URLSearchParams(location.search).get('tab');
+    if (_tabParam && ['gestion','profils'].includes(_tabParam)) switchTab(_tabParam);
+
+    // ================================================================ //
+    //  Onglet Dashboard                                                 //
+    // ================================================================ //
+
+    async function loadStatus() {
+      try {
+        const data = await fetch("/api/status").then(r => r.json());
+        document.getElementById("last-update").textContent =
+          `${T['dashboard.last_update']} : ${data.timestamp}`;
+        renderProfiles(data.profiles || {});
+      } catch(e) {
+        document.getElementById("last-update").textContent = T['dashboard.conn_error'];
+      }
+    }
+
+    function renderProfiles(profiles) {
+      const grid = document.getElementById("profiles-grid");
+      grid.innerHTML = "";
+
+      // Premier démarrage : aucun profil enfant → guider le parent.
+      maybeGuide(Object.keys(profiles).length === 0);
+
+      for (const [key, p] of Object.entries(profiles)) {
+        const meta = PROFILES_META[key] || { emoji: "👤" };
+        const isActive = p.active_devices && p.active_devices.length > 0;
+        const dotClass = isActive ? "online" : "offline";
+        const dotTitle = isActive ? T['dashboard.profile.online'] : T['dashboard.profile.offline'];
+
+        // Les IP sont mémorisées côté JS : JSON.stringify() dans un attribut onclick
+        // produit des guillemets DOUBLES au milieu d'un attribut délimité par des
+        // guillemets doubles — le navigateur tronquait l'attribut et le clic ne faisait
+        // rien du tout. Seule la clé du profil traverse le HTML.
+        _profileDeviceIps[key] = p.device_ips || [];
+
+        let lastSeenBadge = "—";
+        if (p.last_seen_hours !== null && p.last_seen_hours !== undefined) {
+          const h = p.last_seen_hours;
+          const cls = h < 48 ? "badge-green" : h < 120 ? "badge-yellow" : "badge-red";
+          let label;
+          if (h < 1) label = T['dashboard.profile.last_seen_now'];
+          else if (h < 24) label = tr('dashboard.profile.last_seen_hours', {h: Math.round(h)});
+          else label = tr('dashboard.profile.last_seen_days', {d: Math.round(h / 24)});
+          lastSeenBadge = `<span class="badge ${cls}">${label}</span>`;
+        }
+
+        grid.innerHTML += `
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <span class="status-dot ${dotClass}" title="${esc(dotTitle)}"></span>
+                <span class="card-title">${meta.emoji} ${esc(p.name)}</span>
+                ${p.age ? `<span class="age"> · ${esc(p.age)} ${T['dashboard.profile.age_suffix']}</span>` : ''}
+              </div>
+              ${p.is_bedtime ? `<span class="badge badge-red">${T['dashboard.profile.bedtime']}</span>` : ''}
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">${T['dashboard.profile.active_devices']}</span>
+              <span class="stat-value">${isActive ? esc(p.active_devices.join(", ")) : "—"}</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">${T['dashboard.profile.last_seen']}</span>
+              <span class="stat-value">${lastSeenBadge}</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">${T['dashboard.profile.dns_queries']}</span>
+              <span class="stat-value">${esc(p.dns_queries_last_5min || 0)}</span>
+            </div>
+            ${p.device_ips && p.device_ips.length > 0 ? (
+              p.takeover ? `
+              <div class="takeover-badge">
+                <span>${tr('dashboard.profile.adult_mode', {min: p.takeover.minutes_remaining})}</span>
+                <button class="btn-release" onclick="releaseDevice('${escAttrJs(p.takeover.ip)}')">${T['dashboard.profile.release']}</button>
+              </div>` : `
+              <div style="margin-top:12px;text-align:right">
+                <button class="btn-takeover" onclick="openTakeoverModal('${escAttrJs(key)}')">${T['dashboard.profile.takeover']}</button>
+              </div>`
+            ) : ""}
+          </div>`;
+      }
+    }
+
+    const _REPORT_META = {
+      daily_report:   { label: T['report.type.daily'],   icon: '📋', color: '#3b82f6' },
+      weekly_report:  { label: T['report.type.weekly'],  icon: '📈', color: '#8b5cf6' },
+      monthly_report: { label: T['report.type.monthly'], icon: '📅', color: '#f59e0b' },
+    };
+
+    // ── Nouveaux appareils : notification + affectation ──────────────────
+    const _devId = ip => 'pd-' + ip.replace(/[.:]/g, '-');
+
+    async function loadPendingDevices() {
+      try {
+        const data = await fetch('/api/devices/pending').then(r => r.json());
+        renderPendingDevices(data.devices || [], data.profiles || [], data.grace_hours || 0);
+      } catch(_) {}
+    }
+    // Badge d'ancienneté — seulement pour les appareils du réseau enfants en mode gateway
+    // (le backend n'annote que ceux-là). On décrit l'état constaté : tant qu'aucun blocage
+    // n'est appliqué, parler d'« échéance » promettrait une conséquence inexistante.
+    function graceBadge(d, graceHours) {
+      if (typeof d.grace_hours_seen !== 'number') return '';
+      if (d.grace_expired) {
+        const txt = tr('devices.grace_free_access', { h: Math.round(graceHours) });
+        return `<span style="background:#7f1d1d;color:#fecaca;border-radius:5px;padding:2px 7px;font-size:0.7rem;white-space:nowrap">${txt}</span>`;
+      }
+      const h = Math.max(1, Math.round(d.grace_hours_seen));
+      return `<span style="background:#1e293b;color:#94a3b8;border-radius:5px;padding:2px 7px;font-size:0.7rem;white-space:nowrap">${tr('devices.grace_seen_for', { h })}</span>`;
+    }
+    function renderPendingDevices(devices, profiles, graceHours) {
+      const sec  = document.getElementById('new-devices-section');
+      const list = document.getElementById('new-devices-list');
+      const note = document.getElementById('new-devices-grace-note');
+      if (!devices.length) { sec.style.display = 'none'; return; }
+      sec.style.display = '';
+      // Note explicative : uniquement en gateway, où le délai a un sens.
+      if (graceHours > 0) {
+        note.textContent = tr('devices.grace_note', { h: Math.round(graceHours) });
+        note.style.display = '';
+      } else {
+        note.style.display = 'none';
+      }
+      const opts = `<option value="">${T['devices.assign_choose']}</option>`
+        + profiles.map(p => `<option value="${esc(p.key)}">${esc(p.name)}</option>`).join('')
+        + `<option value="__none__">${T['devices.assign_none']}</option>`;
+      list.innerHTML = devices.map(d => {
+        // hostname / mac / ip sont ANNONCÉS PAR L'APPAREIL (DHCP → FTL) : jamais de confiance.
+        const nm = d.hostname && d.hostname !== d.ip
+          ? `${esc(d.hostname)} <span style="color:#64748b;font-size:0.78rem">${esc(d.ip)}</span>` : esc(d.ip);
+        const mac = d.mac ? `<span style="color:#475569;font-size:0.72rem;display:block">${esc(d.mac)}</span>` : '';
+        return `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid #1e293b">
+          <span style="flex:1;min-width:150px;font-size:0.85rem">${nm}${mac}</span>
+          ${graceBadge(d, graceHours)}
+          <select id="${esc(_devId(d.ip))}" style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 8px;border-radius:6px;font-size:0.8rem">${opts}</select>
+          <button class="btn-primary" style="padding:6px 14px;font-size:0.8rem" onclick="assignPending('${escAttrJs(d.ip)}')">OK</button>
+        </div>`;
+      }).join('');
+    }
+    async function assignPending(ip) {
+      const sel = document.getElementById(_devId(ip));
+      const v = sel && sel.value;
+      if (!v) return;
+      try {
+        if (v === '__none__') {
+          await fetch('/api/devices/ignore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip }) });
+        } else {
+          await fetch('/api/devices/assign', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ip, profile_key: v }) });
+        }
+        await loadPendingDevices();
+        loadStatus();
+      } catch(_) {}
+    }
+
+    async function loadPendingReports() {
+      const section = document.getElementById('reports-section');
+      const list    = document.getElementById('reports-list');
+      try {
+        const reports = await fetch('/api/reports/pending').then(r => r.json());
+        if (!Array.isArray(reports) || !reports.length) { section.style.display = 'none'; return; }
+        section.style.display = '';
+        list.innerHTML = reports.map(r => {
+          const m    = _REPORT_META[r.type] || { label: r.type, icon: '📄', color: '#64748b' };
+          const date = r.timestamp.substring(0, 10);
+          return `<div class="report-card" id="report-card-${esc(r.id)}" style="border-left:4px solid ${m.color}">
+            <div class="report-card-header">
+              <span class="report-card-title">${m.icon} ${esc(m.label)} <span class="report-card-date">— ${esc(date)}</span></span>
+              <button class="btn-ack" onclick="acknowledgeReport(${Number(r.id)})">${T['report.ack_btn']}</button>
+            </div>
+            <div class="report-card-body">${renderMarkdown(r.message)}</div>
+          </div>`;
+        }).join('');
+      } catch(_) {
+        section.style.display = 'none';
+      }
+    }
+
+    async function acknowledgeReport(id) {
+      const card = document.getElementById(`report-card-${id}`);
+      if (!card) return;
+      card.classList.add('fading');
+      await fetch(`/api/reports/${id}/acknowledge`, { method: 'POST' });
+      setTimeout(() => {
+        card.remove();
+        if (!document.querySelectorAll('.report-card').length)
+          document.getElementById('reports-section').style.display = 'none';
+      }, 300);
+    }
+
+    async function loadReport() {
+      const content = document.getElementById("report-content");
+      const dateEl  = document.getElementById("report-date");
+      try {
+        const e = await fetch("/api/report").then(r => r.json());
+        if (!e || !e.message) { content.textContent = T['dashboard.report.none']; return; }
+        dateEl.textContent = e.timestamp.substring(0, 16).replace("T", " ");
+        // Le corps du rapport vient des params (message_key) ; pour les rapports
+        // antérieurs, on retire encore l'ancien préfixe français du message brut.
+        let body = '';
+        if (e.message_key && e.params) {
+          try { body = (JSON.parse(e.params) || {}).summary || ''; } catch(_) { body = ''; }
+        }
+        if (!body) body = String(e.message || '').replace(/^Rapport quotidien\s*:\s*/, "");
+        content.innerHTML = renderMarkdown(body);
+      } catch(_) {
+        content.textContent = T['dashboard.report.none'];
+      }
+    }
+
+    async function generateReport() {
+      const btn = document.getElementById('report-generate-btn');
+      const content = document.getElementById('report-content');
+      btn.disabled = true;
+      btn.textContent = T['dashboard.report.generating'];
+      content.textContent = T['report.generating_long'];
+      try {
+        const r = await fetch('/api/report/generate', { method: 'POST' });
+        const data = await r.json();
+        if (data.ok) {
+          await loadReport();
+        } else {
+          content.textContent = T['report.error_prefix'] + ' : ' + apiError(data, 'error.generic');
+          if (data.ai_key_invalid) applyAiStatus(false, T['dashboard.ai.no_key_report']);
+        }
+      } catch(e) {
+        content.textContent = T['report.network_error'];
+      } finally {
+        btn.disabled = false;
+        btn.textContent = T['dashboard.report.generate_btn'];
+      }
+    }
+
+    // Rendu d'un événement du journal. Les événements récents portent une clé i18n
+    // (message_key) et ses paramètres ; ceux écrits avant cette version n'ont que le
+    // texte français d'origine, qu'on affiche alors tel quel plutôt que rien.
+    // La valeur retournée est DÉJÀ échappée : elle part directement dans innerHTML.
+    function eventText(e) {
+      if (e.message_key && T[e.message_key] !== undefined) {
+        let params = {};
+        if (e.params) {
+          try { params = JSON.parse(e.params); } catch(_) { params = {}; }
+        }
+        const safe = {};
+        for (const k in params) {
+          // Les modes sont stockés par leur clé technique ('blocked', 'work'…) :
+          // les afficher tels quels laisserait de l'anglais interne dans un journal
+          // par ailleurs traduit.
+          const v = (k === 'mode') ? (MODE_LABELS[params[k]] || params[k]) : params[k];
+          safe[k] = esc(v);
+        }
+        return tr(e.message_key, safe);
+      }
+      return esc(e.message || '');
+    }
+
+    async function loadEvents() {
+      const list = document.getElementById("events-list");
+      try {
+        const events = await fetch("/api/events?limit=30").then(r => r.json());
+        if (!Array.isArray(events) || !events.length) {
+          list.innerHTML = `<p style="color:#475569;font-size:0.8rem">${T['dashboard.events.none']}</p>`;
+          return;
+        }
+        list.innerHTML = events.map(e => {
+          const time = e.timestamp.substring(11, 16);
+          const detail = e.domain ? `${esc(e.domain)} — ` : "";
+          return `<div class="event-item event-${esc(e.type)}">
+            <span class="event-time">${esc(time)}</span>
+            <span class="event-profile">${esc(e.profile)}</span>
+            <span class="event-msg">${detail}${eventText(e)}</span>
+          </div>`;
+        }).join("");
+      } catch(_) {
+        list.innerHTML = `<p style="color:#475569;font-size:0.8rem">${T['dashboard.events.none']}</p>`;
+      }
+    }
+
+    async function sendChat() {
+      if (!aiAvailable) return;
+      const input = document.getElementById("chat-input");
+      const btn   = document.getElementById("send-btn");
+      const msg   = input.value.trim();
+      if (!msg) return;
+
+      appendMsg(msg, "user");
+      input.value = "";
+      btn.disabled = true;
+
+      const thinking = appendMsg("...", "thinking");
+
+      try {
+        const data = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: msg })
+        }).then(r => r.json());
+
+        thinking.innerHTML = renderMarkdown(data.reply);
+        thinking.className = "msg msg-agent";
+        if (data.ai_available === false) applyAiStatus(false, data.reply);
+      } catch(e) {
+        thinking.textContent = T['dashboard.chat.conn_error'];
+        thinking.className = "msg msg-agent";
+      }
+      btn.disabled = false;
+    }
+
+    function appendMsg(text, type) {
+      const container = document.getElementById("chat-messages");
+      const div = document.createElement("div");
+      if (type === "user") {
+        div.className = "msg msg-user";
+        div.textContent = text;
+      } else {
+        div.className = "msg msg-agent msg-thinking";
+        div.textContent = text;
+      }
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return div;
+    }
+
+    async function resetChat() {
+      await fetch("/api/chat/reset", { method: "POST" });
+      const container = document.getElementById("chat-messages");
+      container.innerHTML = `<div class="msg msg-agent">${T['dashboard.chat.welcome']}</div>`;
+    }
+
+    document.getElementById("chat-input").addEventListener("keydown", e => {
+      if (e.key === "Enter") sendChat();
+    });
+
+    // ================================================================ //
+    //  Onglet Gestion                                                   //
+    // ================================================================ //
+
+    async function loadManagementTab() {
+      const grid = document.getElementById("schedule-grid");
+      if (grid) grid.innerHTML = `<p style="color:#475569;font-size:0.8rem">${T['common.loading']}</p>`;
+      await Promise.all([loadTempOverrides(), loadOverrides(), loadSchedule(), loadDomains(),
+                         loadPrivacy(), loadVersion(), loadTimezone()]);
+    }
+
+    // ---- Overrides temporaires ----
+
+    const _TEMP_MODE_LABELS = {
+      permissive: { icon: '🟢', label: T['manage.temp.label_permissive'], cls: 'badge-green' },
+      work:       { icon: '📚', label: T['mode.work'],                     cls: 'badge-blue'  },
+      blocked:    { icon: '🔴', label: T['mode.blocked'],                  cls: 'badge-red'   },
+    };
+
+    async function loadTempOverrides() {
+      try {
+        const data = await fetch("/api/temp-overrides").then(r => r.json());
+        renderTempOverrides(data);
+      } catch(_) {}
+    }
+
+    function renderTempOverrides(list) {
+      const el = document.getElementById("temp-overrides-list");
+      if (!list.length) { el.innerHTML = ''; return; }
+      el.innerHTML = `<div style="overflow-x:auto;margin-top:12px">
+        <table style="width:100%;border-collapse:collapse;font-size:0.8rem">
+          <thead><tr style="color:#64748b;text-align:left;border-bottom:1px solid #334155">
+            <th style="padding:6px 8px">${T['manage.overrides.profile']}</th>
+            <th style="padding:6px 8px">${T['manage.temp.col_mode']}</th>
+            <th style="padding:6px 8px">${T['manage.temp.col_expires']}</th>
+            <th style="padding:6px 8px"></th>
+          </tr></thead>
+          <tbody>${list.map(t => {
+            const m = _TEMP_MODE_LABELS[t.mode] || { icon:'', label: esc(t.mode), cls:'badge-yellow' };
+            const mins = t.minutes_left;
+            const left = mins >= 60 ? `${Math.floor(mins/60)}h${(mins%60).toString().padStart(2,'0')}` : `${mins} ${T['manage.temp.min_suffix']}`;
+            return `<tr style="border-bottom:1px solid #0f172a">
+              <td style="padding:7px 8px;font-weight:500">${esc(t.profile)}</td>
+              <td style="padding:7px 8px"><span class="badge ${m.cls}">${m.icon} ${m.label}</span></td>
+              <td style="padding:7px 8px;color:#94a3b8">${esc(left)}</td>
+              <td style="padding:7px 8px;text-align:right">
+                <button class="btn-danger" onclick="cancelTempOverride('${escAttrJs(t.profile)}')">${T['profiles.cancel_btn']}</button>
+              </td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table></div>`;
+    }
+
+    async function addTempOverride() {
+      const profile = document.getElementById("temp-profile").value;
+      const mode    = document.getElementById("temp-mode").value;
+      const minutes = parseInt(document.getElementById("temp-minutes").value);
+      if (!profile) return;
+      const r = await fetch("/api/temp-overrides", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile, mode, minutes })
+      });
+      if (!r.ok) { const e = await r.json(); alert(apiError(e, 'manage.temp.error')); return; }
+      await loadTempOverrides();
+    }
+
+    async function cancelTempOverride(profile) {
+      await fetch(`/api/temp-overrides/${profile}`, { method: "DELETE" });
+      await loadTempOverrides();
+    }
+
+    // ---- Overrides ----
+
+    async function loadOverrides() {
+      try {
+        const data = await fetch("/api/overrides").then(r => r.json());
+        renderOverrides(data);
+      } catch(_) {}
+    }
+
+    function renderOverrides(list) {
+      const tbody = document.getElementById("overrides-body");
+      if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="color:#475569;padding:12px 8px">${T['manage.overrides.none']}</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = list.map(ov => {
+        const cls = ov.mode === 'blocked' ? 'badge-red' : ov.mode === 'free' ? 'badge-green' : ov.mode === 'work' ? 'badge-blue' : 'badge-yellow';
+        const lbl = MODE_LABELS[ov.mode] || esc(ov.mode);
+        return `<tr style="border-bottom:1px solid #0f172a">
+          <td style="padding:7px 8px;font-weight:500">${esc(ov.profile)}</td>
+          <td style="padding:7px 8px">${esc(ov.date)}</td>
+          <td style="padding:7px 8px"><span class="badge ${cls}">${lbl}</span></td>
+          <td style="padding:7px 8px;color:#94a3b8">${esc(ov.reason || '—')}</td>
+          <td style="padding:7px 8px;text-align:right">
+            <button class="btn-danger" onclick="deleteOverride('${escAttrJs(ov.profile)}','${escAttrJs(ov.date)}')">${T['manage.overrides.delete_btn']}</button>
+          </td>
+        </tr>`;
+      }).join("");
+    }
+
+    async function addOverride() {
+      const profile = document.getElementById("ov-profile").value;
+      const date    = document.getElementById("ov-date").value;
+      const mode    = document.getElementById("ov-mode").value;
+      const reason  = document.getElementById("ov-reason").value.trim();
+      if (!profile || !date) return;
+      try {
+        await fetch("/api/overrides", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profile, date, mode, reason })
+        });
+        document.getElementById("ov-reason").value = "";
+        await loadOverrides();
+      } catch(_) {}
+    }
+
+    async function deleteOverride(profile, date) {
+      if (!confirm(tr('manage.overrides.delete_confirm', {date, profile}))) return;
+      try {
+        await fetch(`/api/overrides/${profile}/${date}`, { method: "DELETE" });
+        await loadOverrides();
+      } catch(_) {}
+    }
+
+    // ---- Schedule ----
+
+    async function loadSchedule() {
+      try {
+        scheduleData = await fetch("/api/schedule").then(r => r.json());
+        renderSchedule();
+        populateProfileSelector();
+      } catch(_) {}
+    }
+
+    function renderSchedule() {
+      const grid = document.getElementById("schedule-grid");
+      const entries = Object.entries(scheduleData);
+      if (!entries.length) {
+        grid.innerHTML = `<p style="color:#475569;font-size:0.8rem">${T['manage.schedule.none']}</p>`;
+        return;
+      }
+      grid.innerHTML = entries.map(([key, s]) => {
+        const slot = s.current_slot || {};
+        const mode = slot.mode || 'unknown';
+        const modeColor = {
+          blocked: '#f87171', work: '#60a5fa',
+          permissive: '#c084fc', free: '#4ade80'
+        }[mode] || '#94a3b8';
+        const meta = PROFILES_META[key] || { emoji: "👤" };
+        return `<div class="schedule-card">
+          <div class="sc-name">${meta.emoji} ${esc(s.name)}</div>
+          <div class="sc-mode" style="color:${modeColor}">● ${MODE_LABELS[mode] || esc(mode)}</div>
+          ${slot.slot_start ? `<div class="sc-time">${esc(slot.slot_start)} – ${esc(slot.slot_end)}</div>` : ''}
+        </div>`;
+      }).join("");
+    }
+
+    function populateProfileSelector() {
+      const opts = Object.entries(scheduleData).map(([key, s]) =>
+        `<option value="${esc(key)}">${esc(s.name)}</option>`
+      ).join("");
+      for (const id of ["ov-profile", "temp-profile"]) {
+        const sel = document.getElementById(id);
+        if (!sel) continue;
+        const current = sel.value;
+        sel.innerHTML = opts;
+        if (current) sel.value = current;
+      }
+    }
+
+    // ---- Domaines ----
+
+    async function loadDomains() {
+      try {
+        domainsData = await fetch("/api/domains").then(r => r.json());
+        editingDomainIndex = null;
+        renderManagedDomains();
+      } catch(_) {}
+    }
+
+    function renderManagedDomains() {
+      const filtered = activeMgmtFilter === 'all'
+        ? domainsData
+        : domainsData.filter(d => d.category === activeMgmtFilter);
+      const sorted = [...filtered].sort((a, b) => b.hits_total - a.hits_total).slice(0, 100);
+
+      document.getElementById("managed-domains-count").textContent =
+        tr('manage.domains.count', {n: sorted.length});
+
+      const cats = ['all', ...new Set(domainsData.map(d => d.category).sort())];
+      document.getElementById("managed-domains-filters").innerHTML = cats.map(cat => {
+        const isActive = cat === activeMgmtFilter;
+        const label = cat === 'all' ? T['manage.domains.all'] : esc(cat);
+        const c = CATEGORY_COLORS[cat];
+        const style = isActive && c
+          ? `background:${c.bg};color:${c.text};border:1px solid ${c.border}`
+          : isActive
+          ? 'background:#1d4ed8;color:#fff;border:1px solid #1d4ed8'
+          : 'background:#0f172a;color:#64748b;border:1px solid #334155';
+        return `<button onclick="setMgmtFilter('${escAttrJs(cat)}')" style="font-size:0.75rem;padding:3px 10px;border-radius:9999px;cursor:pointer;${style}">${label}</button>`;
+      }).join("");
+
+      const tbody = document.getElementById("managed-domains-body");
+      if (!sorted.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color:#475569;padding:12px 8px">${T['manage.domains.none']}</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = sorted.map(d => {
+        const gi = domainsData.findIndex(x => x.domain === d.domain);
+        if (gi === editingDomainIndex) return domainEditRow(d, gi);
+
+        const work = d.blocked_work
+          ? '<span style="color:#f87171">✕</span>'
+          : '<span style="color:#475569">—</span>';
+        const perm = d.blocked_permissive
+          ? '<span style="color:#f87171">✕</span>'
+          : '<span style="color:#475569">—</span>';
+        return `<tr style="border-bottom:1px solid #0f172a">
+          <td style="padding:7px 8px;font-family:monospace;color:#e2e8f0">${esc(d.domain)}</td>
+          <td style="padding:7px 8px">${categoryBadge(d.category)}</td>
+          <td style="padding:7px 8px;text-align:right;color:#94a3b8">${esc(d.hits_total)}</td>
+          <td style="padding:7px 8px;text-align:center">${work}</td>
+          <td style="padding:7px 8px;text-align:center">${perm}</td>
+          <td style="padding:7px 8px;text-align:right">
+            <button class="btn-edit" onclick="startEditDomain(${gi})">${T['manage.domains.edit_btn']}</button>
+          </td>
+        </tr>`;
+      }).join("");
+    }
+
+    function domainEditRow(d, gi) {
+      const options = CATEGORIES.map(c =>
+        `<option value="${esc(c)}"${c === d.category ? ' selected' : ''}>${esc(c)}</option>`
+      ).join("");
+      return `<tr style="border-bottom:1px solid #0f172a;background:#0c1322">
+        <td style="padding:7px 8px;font-family:monospace;color:#e2e8f0">${esc(d.domain)}</td>
+        <td style="padding:7px 8px">
+          <select id="edit-cat" style="background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:3px 6px;border-radius:4px;font-size:0.75rem">${options}</select>
+        </td>
+        <td style="padding:7px 8px;text-align:right;color:#94a3b8">${esc(d.hits_total)}</td>
+        <td style="padding:7px 8px;text-align:center">
+          <input type="checkbox" id="edit-work" ${d.blocked_work ? 'checked' : ''}>
+        </td>
+        <td style="padding:7px 8px;text-align:center">
+          <input type="checkbox" id="edit-perm" ${d.blocked_permissive ? 'checked' : ''}>
+        </td>
+        <td style="padding:7px 8px;text-align:right">
+          <div style="display:flex;gap:4px;justify-content:flex-end">
+            <button class="btn-save"   onclick="saveEditDomain(${gi})">${T['manage.domains.save_btn']}</button>
+            <button class="btn-cancel" onclick="cancelEditDomain()">${T['manage.domains.cancel_btn']}</button>
+          </div>
+        </td>
+      </tr>`;
+    }
+
+    function setMgmtFilter(cat) { activeMgmtFilter = cat; editingDomainIndex = null; renderManagedDomains(); }
+    function startEditDomain(gi) { editingDomainIndex = gi; renderManagedDomains(); }
+    function cancelEditDomain() { editingDomainIndex = null; renderManagedDomains(); }
+
+    async function saveEditDomain(gi) {
+      const d = domainsData[gi];
+      const category      = document.getElementById("edit-cat").value;
+      const blocked_work  = document.getElementById("edit-work").checked ? 1 : 0;
+      const blocked_permissive = document.getElementById("edit-perm").checked ? 1 : 0;
+      try {
+        await fetch(`/api/domains/${encodeURIComponent(d.domain)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ category, blocked_work, blocked_permissive })
+        });
+        await loadDomains();
+      } catch(_) { cancelEditDomain(); }
+    }
+
+    // ================================================================ //
+    //  SSE — mises à jour temps réel                                   //
+    // ================================================================ //
+
+    const evtSource = new EventSource("/api/stream");
+
+    evtSource.addEventListener("status", e => {
+      const data = JSON.parse(e.data);
+      document.getElementById("last-update").textContent =
+        `${T['dashboard.last_update']} : ${data.timestamp}`;
+      renderProfiles(data.profiles || {});
+    });
+
+    evtSource.addEventListener("new_events", e => {
+      const newEvents = JSON.parse(e.data);
+      const list = document.getElementById("events-list");
+      newEvents.forEach(ev => {
+        const time = ev.timestamp.substring(11, 16);
+        const detail = ev.domain ? `${esc(ev.domain)} — ` : "";
+        const div = document.createElement("div");
+        div.className = `event-item event-${String(ev.type || '').replace(/[^\w-]/g, '')}`;
+        div.innerHTML = `
+          <span class="event-time">${esc(time)}</span>
+          <span class="event-profile">${esc(ev.profile)}</span>
+          <span class="event-msg">${detail}${eventText(ev)}</span>`;
+        list.prepend(div);
+        div.style.background = "#1e3a5f";
+        setTimeout(() => div.style.background = "", 2000);
+      });
+    });
+
+    evtSource.onerror = () => {};
+
+    // ================================================================ //
+    //  Onglet Profils                                                   //
+    // ================================================================ //
+
+    async function loadProfiles() {
+      const container = document.getElementById('profiles-list-ui');
+      if (container) container.innerHTML = `<p style="color:#475569;font-size:0.875rem">${T['dashboard.loading'] || T['common.loading']}</p>`;
+      try {
+        // netInfo sert à nommer le bon Wi-Fi dans l'explication « profil sans appareil ».
+        // Son échec ne doit pas empêcher l'affichage des profils : on garde le défaut.
+        const [profiles, net] = await Promise.all([
+          fetch('/api/profiles').then(r => r.json()),
+          fetch('/api/network/info').then(r => r.json()).catch(() => null),
+        ]);
+        profilesData = profiles;
+        if (net) netInfo = net;
+        renderProfilesList();
+      } catch(err) {
+        console.error('[loadProfiles]', err);
+        if (container) container.innerHTML = `<p style="color:#ef4444;font-size:0.875rem">${T['common.error_prefix']} ${esc(err.message)}</p>`;
+      }
+    }
+
+    const _SLOT_COLOR = { blocked: '#f87171', work: '#60a5fa', permissive: '#c084fc' };
+    const _SLOT_LABEL = { blocked: T['mode.blocked'], work: T['mode.work'], permissive: T['mode.permissive'] };
+    const _DAY_KEYS   = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+
+    function renderSlotReadOnly(schedule) {
+      // Regrouper les jours qui ont le même planning
+      const sig = day => JSON.stringify([...(schedule[day] || [])].sort((a,b) => a.start.localeCompare(b.start)));
+      const groups = new Map();
+      _DAY_KEYS.forEach((day, di) => {
+        const k = sig(day);
+        if (!groups.has(k)) groups.set(k, { dayIndices: [], slots: [...(schedule[day]||[])].sort((a,b)=>a.start.localeCompare(b.start)) });
+        groups.get(k).dayIndices.push(di);
+      });
+      return [...groups.values()].filter(g => g.slots.length).map(g => {
+        // Compresser les jours consécutifs : Lu-Ve plutôt que Lu Ma Me Je Ve
+        const label = _compressDayRanges(g.dayIndices);
+        const chips = g.slots.map(s => {
+          const col = _SLOT_COLOR[s.mode] || '#94a3b8';
+          const lbl = _SLOT_LABEL[s.mode] || esc(s.mode);
+          return `<span style="display:inline-flex;align-items:center;gap:4px;background:#1e293b;border:1px solid #334155;border-radius:6px;padding:2px 8px;font-size:0.75rem;color:#e2e8f0">
+            ${esc(s.start)}–${esc(s.end)}<span style="color:${col};font-weight:700"> · ${lbl}</span>
+          </span>`;
+        }).join('');
+        return `<div style="display:flex;gap:10px;align-items:flex-start;margin-top:8px;flex-wrap:wrap">
+          <span style="color:#64748b;font-size:0.72rem;font-weight:600;min-width:52px;padding-top:3px;white-space:nowrap">${label}</span>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">${chips}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function _compressDayRanges(indices) {
+      if (!indices.length) return '';
+      const runs = [];
+      let start = indices[0], prev = indices[0];
+      for (let k = 1; k < indices.length; k++) {
+        if (indices[k] === prev + 1) { prev = indices[k]; }
+        else { runs.push([start, prev]); start = prev = indices[k]; }
+      }
+      runs.push([start, prev]);
+      return runs.map(([s, e]) =>
+        s === e ? _SHORT_DAYS[s] : (e - s === 1 ? `${_SHORT_DAYS[s]} ${_SHORT_DAYS[e]}` : `${_SHORT_DAYS[s]}-${_SHORT_DAYS[e]}`)
+      ).join(', ');
+    }
+
+    // Un profil sans appareil n'applique RIEN : son planning tourne à vide. On le dit
+    // explicitement au parent (affiché à la création, et tant que rien n'est rattaché)
+    // avec la marche à suivre, qui diffère selon le mode réseau du boîtier.
+    function renderNoDeviceNotice(key, name) {
+      const step1 = netInfo.enforcement === 'gateway'
+        ? tr('profiles.no_device_step1_gateway', { ssid: esc(netInfo.kids_ssid || 'Protectado') })
+        : T['profiles.no_device_step1_dns'];
+      return `
+        <div id="nodev-${esc(key)}" style="margin-top:10px;padding:12px 14px;background:#2a2109;border:1px solid #a16207;border-radius:8px">
+          <div style="color:#fbbf24;font-weight:700;font-size:0.85rem;margin-bottom:6px">${T['profiles.no_device_title']}</div>
+          <p style="color:#e2e8f0;font-size:0.8rem;margin:0 0 8px;line-height:1.5">${tr('profiles.no_device_desc', { name: esc(name) })}</p>
+          <ol style="color:#cbd5e1;font-size:0.8rem;margin:0 0 10px;padding-left:20px;line-height:1.6">
+            <li>${step1}</li>
+            <li>${T['profiles.no_device_step2']}</li>
+          </ol>
+          <a class="btn-edit" href="/devices" style="text-decoration:none;font-size:0.75rem">${T['profiles.no_device_btn']}</a>
+        </div>`;
+    }
+
+    function renderProfilesList() {
+      const container = document.getElementById('profiles-list-ui');
+      const entries = Object.entries(profilesData).filter(([k]) => k !== 'monitoring');
+      if (!entries.length) {
+        container.innerHTML = `<p style="color:#475569;font-size:0.875rem">${T['profiles.none']}</p>`;
+        return;
+      }
+      container.innerHTML = entries.map(([key, p]) => {
+        const deviceCount = (p.devices || []).length;
+        const isEditing = editingProfile === key;
+        return `
+          <div class="card" style="margin-bottom:12px">
+            <div class="card-header">
+              <div>
+                <span class="card-title">👤 ${esc(p.name)}</span>
+                ${p.age ? `<span class="age"> · ${esc(p.age)} ${T['dashboard.profile.age_suffix']}</span>` : ''}
+                <span style="color:#475569;font-size:0.75rem;margin-left:8px">${tr('profiles.devices_count',{n:deviceCount})}</span>
+              </div>
+              <div style="display:flex;gap:6px">
+                ${isEditing
+                  ? `<button class="btn-cancel" onclick="cancelEditProfile()">${T['profiles.close_btn']}</button>`
+                  : `<button class="btn-edit" onclick="startEditProfile('${escAttrJs(key)}')">${T['profiles.edit_btn']}</button>
+                     <button class="btn-danger" onclick="deleteProfile('${escAttrJs(key)}','${escAttrJs(p.name)}')">${T['profiles.delete_btn']}</button>`
+                }
+              </div>
+            </div>
+            ${isEditing
+              ? renderProfileEditor(key, p)
+              : `<div style="padding-top:10px;border-top:1px solid #1e293b">${renderSlotReadOnly(p.schedule || {})}</div>`
+            }
+            ${deviceCount === 0 ? renderNoDeviceNotice(key, p.name) : ''}
+          </div>`;
+      }).join('');
+    }
+
+    // ── Conversion planning ↔ templates ────────────────────────────────
+    // Un "template" = une plage horaire (start, end, mode) + tableau de 7 booléens (jours)
+    // Le stockage reste par-jour ; les templates ne servent qu'à l'édition.
+
+    const _SHORT_DAYS = ['Lu','Ma','Me','Je','Ve','Sa','Di'];
+    let _editingTemplates = {}; // key → [{start,end,mode,days:[7×bool]}]
+
+    function scheduleToTemplates(schedule) {
+      const map = new Map();
+      _DAY_KEYS.forEach((day, di) => {
+        (schedule[day] || []).forEach(slot => {
+          const k = `${slot.start}|${slot.end}|${slot.mode}`;
+          if (!map.has(k)) map.set(k, { start: slot.start, end: slot.end, mode: slot.mode, days: Array(7).fill(false) });
+          map.get(k).days[di] = true;
+        });
+      });
+      return [...map.values()].sort((a, b) => a.start.localeCompare(b.start));
+    }
+
+    function templatesToSchedule(templates) {
+      const sched = Object.fromEntries(_DAY_KEYS.map(d => [d, []]));
+      templates.forEach(tpl => {
+        _DAY_KEYS.forEach((day, di) => {
+          if (tpl.days[di]) sched[day].push({ start: tpl.start, end: tpl.end, mode: tpl.mode });
+        });
+      });
+      _DAY_KEYS.forEach(day => sched[day].sort((a, b) => a.start.localeCompare(b.start)));
+      return sched;
+    }
+
+    // ── Rendu de l'éditeur ───────────────────────────────────────────────
+
+    function _tplRow(key, tpl, i) {
+      const ts = "background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:5px 8px;border-radius:6px;font-size:0.8rem";
+      const modeOpts = ['blocked','work','permissive'].map(m =>
+        `<option value="${esc(m)}"${tpl.mode===m?' selected':''}>${_SLOT_LABEL[m]||esc(m)}</option>`
+      ).join('');
+      const dayBoxes = _SHORT_DAYS.map((d, di) => `
+        <label style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;user-select:none">
+          <input type="checkbox" ${tpl.days[di]?'checked':''} onchange="toggleTemplateDay('${escAttrJs(key)}',${Number(i)},${Number(di)})" style="accent-color:#6366f1;cursor:pointer;width:14px;height:14px">
+          <span style="font-size:0.62rem;font-weight:700;color:${tpl.days[di]?'#e2e8f0':'#475569'}">${d}</span>
+        </label>`).join('');
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:10px 12px;background:#0f172a;border:1px solid #1e293b;border-radius:8px;flex-wrap:wrap">
+        <input type="time" value="${esc(tpl.start)}" style="${ts}" onchange="updateTemplate('${escAttrJs(key)}',${Number(i)},'start',this.value)">
+        <span style="color:#475569;font-size:0.8rem">→</span>
+        <input type="time" value="${esc(tpl.end)}" style="${ts}" onchange="updateTemplate('${escAttrJs(key)}',${Number(i)},'end',this.value)">
+        <select style="${ts}" onchange="updateTemplate('${escAttrJs(key)}',${Number(i)},'mode',this.value)">${modeOpts}</select>
+        <div style="display:flex;gap:7px;margin-left:6px">${dayBoxes}</div>
+        <button class="btn-danger" style="padding:3px 8px;margin-left:auto" onclick="removeTemplate('${escAttrJs(key)}',${Number(i)})">×</button>
+      </div>`;
+    }
+
+    function renderProfileEditor(key, p) {
+      const tmpls = _editingTemplates[key] || [];
+      return `
+        <div style="padding-top:16px;border-top:1px solid #334155">
+          <div class="form-row" style="margin-bottom:20px">
+            <div class="form-field">
+              <label>${T['profiles.name_label']}</label>
+              <input type="text" id="ep-name-${esc(key)}" value="${esc(p.name)}" style="min-width:140px">
+            </div>
+            <div class="form-field">
+              <label>${T['profiles.age_label']}</label>
+              <input type="number" id="ep-age-${esc(key)}" value="${esc(p.age || '')}" min="1" max="99" style="width:70px">
+            </div>
+            <div class="form-field">
+              <label>${T['profiles.privacy_level']}</label>
+              <select id="ep-priv-${esc(key)}" style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 9px;border-radius:6px;font-size:0.85rem">
+                ${['detailed','summary','minimal'].map(lv =>
+                  `<option value="${lv}"${(p.privacy_level||'')===lv ? ' selected' : ''}>${esc(T['profiles.privacy_' + lv])}</option>`
+                ).join('')}
+              </select>
+            </div>
+          </div>
+          <p style="font-size:0.75rem;color:#64748b;margin:0 0 12px">${esc(T['profiles.privacy_hint'])}</p>
+          <p style="font-size:0.75rem;color:#64748b;margin:0 0 12px">
+            ${T['profiles.uncovered_prefix']} <span style="color:#f87171;font-weight:600">${T['profiles.uncovered_blocked']}</span>.
+          </p>
+          <div id="tpl-rows-${esc(key)}">
+            ${tmpls.map((tpl, i) => _tplRow(key, tpl, i)).join('')}
+          </div>
+          <button class="btn-edit" style="font-size:0.75rem;margin-bottom:16px" onclick="addTemplate('${escAttrJs(key)}')">${T['profiles.add_slot']}</button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn-primary" onclick="saveProfile('${escAttrJs(key)}')">${T['profiles.save_btn']}</button>
+            <button class="btn-danger" onclick="purgeProfileHistory('${escAttrJs(key)}','${escAttrJs(p.name)}')">${T['profiles.purge_history']}</button>
+          </div>
+        </div>`;
+    }
+
+    // ── Actions sur les templates ────────────────────────────────────────
+
+    // Les actions de template servent l'éditeur en ligne (liste) ET le formulaire de
+    // création ('__new__') : on re-rend la bonne zone selon la clé.
+    function _rerenderTemplates(key) {
+      if (key === '__new__') renderNewFormRows(); else renderProfilesList();
+    }
+    function renderNewFormRows() {
+      const rows = document.getElementById('np-tpl-rows');
+      if (rows) rows.innerHTML = (_editingTemplates['__new__'] || []).map((tpl, i) => _tplRow('__new__', tpl, i)).join('');
+    }
+    function addTemplate(key) {
+      if (!_editingTemplates[key]) _editingTemplates[key] = [];
+      _editingTemplates[key].push({ start: '08:00', end: '20:00', mode: 'work', days: [true,true,true,true,true,false,false] });
+      _rerenderTemplates(key);
+    }
+    function removeTemplate(key, i) { _editingTemplates[key].splice(i, 1); _rerenderTemplates(key); }
+    function updateTemplate(key, i, field, value) { _editingTemplates[key][i][field] = value; }
+    function toggleTemplateDay(key, i, di) { _editingTemplates[key][i].days[di] = !_editingTemplates[key][i].days[di]; _rerenderTemplates(key); }
+
+    function startEditProfile(key) {
+      editingProfile = key;
+      if (!profilesData[key].schedule) profilesData[key].schedule = Object.fromEntries(_DAY_KEYS.map(d => [d, []]));
+      _editingTemplates[key] = scheduleToTemplates(profilesData[key].schedule);
+      renderProfilesList();
+    }
+    function cancelEditProfile() {
+      if (editingProfile) delete _editingTemplates[editingProfile];
+      editingProfile = null;
+      loadProfiles();
+    }
+
+    async function saveProfile(key) {
+      const nameEl = document.getElementById(`ep-name-${key}`);
+      const ageEl  = document.getElementById(`ep-age-${key}`);
+      const name = nameEl.value.trim();
+      if (!name) { nameEl.style.borderColor = '#ef4444'; return; }
+      const age = ageEl.value ? parseInt(ageEl.value) : null;
+      const privEl = document.getElementById(`ep-priv-${key}`);
+      const schedule = templatesToSchedule(_editingTemplates[key] || []);
+      try {
+        await fetch(`/api/profiles/${key}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, age, schedule,
+                                 privacy_level: privEl ? privEl.value : '' })
+        });
+        delete _editingTemplates[key];
+        editingProfile = null;
+        await loadProfiles();
+      } catch(_) {}
+    }
+
+    function showNewProfileForm() {
+      document.getElementById('new-profile-form').style.display = '';
+      // Un profil DOIT porter un planning : on amorce une plage par défaut (modifiable).
+      if (!_editingTemplates['__new__'] || !_editingTemplates['__new__'].length) {
+        _editingTemplates['__new__'] = [{ start: '08:00', end: '20:00', mode: 'work', days: [true,true,true,true,true,false,false] }];
+      }
+      renderNewFormRows();
+      document.getElementById('np-error').style.display = 'none';
+      document.getElementById('np-name').focus();
+    }
+    function hideNewProfileForm() {
+      document.getElementById('new-profile-form').style.display = 'none';
+      delete _editingTemplates['__new__'];
+    }
+
+    async function createProfile() {
+      const nameEl = document.getElementById('np-name');
+      const name = nameEl.value.trim();
+      const age  = document.getElementById('np-age').value;
+      const err  = document.getElementById('np-error');
+      err.style.display = 'none';
+      if (!name) { nameEl.style.borderColor = '#ef4444'; return; }
+      // Au minimum une plage horaire, avec au moins un jour coché.
+      const tpls = (_editingTemplates['__new__'] || []).filter(t => t.days.some(Boolean));
+      if (!tpls.length) { err.textContent = T['profiles.need_slot']; err.style.display = 'block'; return; }
+      const schedule = templatesToSchedule(tpls);
+      const key = name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+      try {
+        const r = await fetch(`/api/profiles/${key}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, age: age ? parseInt(age) : null, schedule })
+        });
+        if (!r.ok) { err.textContent = T['profiles.need_slot']; err.style.display = 'block'; return; }
+        document.getElementById('np-name').value = '';
+        document.getElementById('np-age').value  = '';
+        delete _editingTemplates['__new__'];
+        document.getElementById('new-profile-form').style.display = 'none';
+        await loadProfiles();
+        // Le profil vient d'être créé sans appareil : amener le parent sur l'explication
+        // « le filtrage ne démarre qu'avec un appareil » plutôt que la laisser passer.
+        const notice = document.getElementById(`nodev-${key}`);
+        if (notice) {
+          notice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          notice.animate(
+            [{ boxShadow: '0 0 0 0 rgba(251,191,36,0)' },
+             { boxShadow: '0 0 0 4px rgba(251,191,36,0.45)' },
+             { boxShadow: '0 0 0 0 rgba(251,191,36,0)' }],
+            { duration: 1600, iterations: 2 }
+          );
+        }
+      } catch(_) {}
+    }
+
+    async function deleteProfile(key, name) {
+      if (!confirm(tr('profiles.delete_confirm', {name}))) return;
+      // Supprimer le profil ne supprimait PAS ses données : elles restaient en base
+      // sans plus aucun moyen de les atteindre. Le parent choisit explicitement.
+      const alsoHistory = confirm(T['profiles.delete_with_history']);
+      try {
+        await fetch(`/api/profiles/${encodeURIComponent(key)}?purge_history=${alsoHistory}`,
+                    { method: 'DELETE' });
+        await loadProfiles();
+      } catch(_) {}
+    }
+
+    // Effacement de l'historique d'un enfant — mot de passe exigé, comme le mode adulte.
+    async function purgeProfileHistory(key, name) {
+      if (!confirm(tr('profiles.purge_confirm', {name}))) return;
+      const pw = prompt(T['manage.backup.password_prompt']);
+      if (pw === null || pw === '') return;
+      try {
+        const r = await fetch(`/api/profiles/${encodeURIComponent(key)}/purge-history`, {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ password: pw })
+        });
+        const j = await r.json();
+        alert(j.ok ? tr('profiles.purge_done', { n: j.total }) : apiError(j, 'error.generic'));
+        if (j.ok) { loadProfiles(); loadEvents(); }
+      } catch(_) {}
+    }
+
+    async function piholeSetup() {
+      const btn = document.getElementById('pihole-setup-btn');
+      const status = document.getElementById('pihole-setup-status');
+      btn.disabled = true;
+      status.textContent = T['profiles.pihole_loading'];
+      status.style.color = '#64748b';
+      try {
+        const res = await fetch('/api/profiles/pihole-setup', { method: 'POST' }).then(r => r.json());
+        status.textContent = res.ok ? T['profiles.pihole_ok'] : '✗ ' + apiError(res, 'profiles.pihole_error');
+        status.style.color = res.ok ? '#4ade80' : '#f87171';
+      } catch(_) {
+        status.textContent = '✗ ' + T['profiles.pihole_error'];
+        status.style.color = '#f87171';
+      }
+      btn.disabled = false;
+    }
+
+    async function restoreBackup() {
+      const fileInput = document.getElementById('restore-file');
+      const status = document.getElementById('restore-status');
+      if (!fileInput.files.length) return;
+      const pw = prompt(T['manage.backup.password_prompt']);
+      if (pw === null || pw === '') { fileInput.value = ''; return; }
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      formData.append('password', pw);
+      status.textContent = T['manage.restore.loading'];
+      status.style.color = '#64748b';
+      try {
+        const r = await fetch('/api/restore', { method: 'POST', body: formData });
+        const j = await r.json();
+        if (j.ok) {
+          status.textContent = T['manage.restore.ok'];
+          status.style.color = '#4ade80';
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          status.textContent = '✗ ' + apiError(j, 'manage.restore.error');
+          status.style.color = '#f87171';
+        }
+      } catch (_) {
+        status.textContent = '✗ ' + T['manage.restore.error'];
+        status.style.color = '#f87171';
+      }
+      fileInput.value = '';
+    }
+
+    // La sauvegarde contient des SECRETS EN CLAIR (mot de passe parent, clé OpenRouter,
+    // clés Wi-Fi en gateway). On exige donc une re-saisie du mot de passe, comme pour le
+    // mode adulte. Le téléchargement restant un GET, on échange le mot de passe contre un
+    // jeton à usage unique et de courte durée, passé en paramètre.
+    async function downloadBackup() {
+      const status = document.getElementById('backup-status');
+      const pw = prompt(T['manage.backup.password_prompt']);
+      if (pw === null || pw === '') return;
+      status.textContent = '';
+      try {
+        const r = await fetch('/api/backup/authorize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw })
+        });
+        const j = await r.json();
+        if (!j.ok || !j.token) {
+          status.textContent = '✗ ' + apiError(j, 'manage.backup.error');
+          status.style.color = '#f87171';
+          return;
+        }
+        location.href = '/backup?token=' + encodeURIComponent(j.token);
+      } catch (_) {
+        status.textContent = '✗ ' + T['manage.backup.error'];
+        status.style.color = '#f87171';
+      }
+    }
+
+    // ── Version installée ───────────────────────────────────────────────
+    async function loadVersion() {
+      let v = {};
+      try { v = await fetch('/api/version').then(r => r.json()); } catch(_) { v = {}; }
+      // Information absente (installation antérieure au fichier de version) : un tiret,
+      // jamais une erreur — elle n'empêche rien et n'a pas à inquiéter le parent.
+      document.getElementById('version-commit').textContent = v.commit || '—';
+      document.getElementById('version-branch').textContent =
+        v.branch ? ' · ' + v.branch : '';
+      document.getElementById('version-date').textContent =
+        v.updated_at ? ' · ' + tr('manage.update.version_date',
+                                  { date: esc(v.updated_at.substring(0, 16).replace('T', ' ')) })
+                     : '';
+    }
+
+    // ── Fuseau horaire ──────────────────────────────────────────────────
+    async function loadTimezone() {
+      try {
+        const d = await fetch('/api/timezone').then(r => r.json());
+        document.getElementById('tz-value').textContent = d.timezone || '—';
+        document.getElementById('tz-now').textContent = d.now ? ' · ' + esc(d.now) : '';
+      } catch(_) {}
+    }
+
+    async function changeTimezone() {
+      const cur = document.getElementById('tz-value').textContent;
+      // Le navigateur du parent connaît son propre fuseau : on le propose par défaut,
+      // c'est presque toujours la bonne réponse et il n'a rien à taper.
+      let detected = '';
+      try { detected = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch(_) {}
+      const tz = prompt(tr('manage.timezone.prompt', { detected: detected || '—' }),
+                        detected || cur);
+      if (!tz) return;
+      try {
+        const r = await fetch('/api/timezone', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ timezone: tz.trim() })
+        });
+        const j = await r.json();
+        if (!j.ok) { alert(apiError(j, 'error.generic')); return; }
+        // Le runner redémarre l'agent pour que le planificateur reparte à la bonne heure :
+        // on laisse passer ce redémarrage avant de relire.
+        alert(T['manage.timezone.applied']);
+        setTimeout(loadTimezone, 4000);
+      } catch(_) {}
+    }
+
+    // ── Vie privée ──────────────────────────────────────────────────────
+    const RETENTION_CHOICES = [30, 60, 90, 180, 365, 0];
+    let privacyData = {};
+
+    async function loadPrivacy() {
+      try { privacyData = await fetch('/api/privacy').then(r => r.json()); }
+      catch(_) { return; }
+      const sel = document.getElementById('retention-select');
+      if (sel) {
+        sel.innerHTML = RETENTION_CHOICES.map(n =>
+          `<option value="${n}">${n === 0 ? esc(T['manage.privacy.retention_unlimited'])
+                                          : esc(tr('manage.privacy.retention_days', {n}))}</option>`
+        ).join('');
+        // Une valeur réglée à la main hors de la liste reste sélectionnable.
+        if (!RETENTION_CHOICES.includes(privacyData.retention_days)) {
+          sel.insertAdjacentHTML('afterbegin',
+            `<option value="${Number(privacyData.retention_days)}">${esc(tr('manage.privacy.retention_days', {n: privacyData.retention_days}))}</option>`);
+        }
+        sel.value = String(privacyData.retention_days);
+      }
+      renderRetentionNote();
+      const cb = document.getElementById('share-ai');
+      if (cb) {
+        cb.checked = !!privacyData.share_with_ai;
+        cb.disabled = !privacyData.ai_key_present;
+        document.getElementById('share-off-note').style.display =
+          privacyData.share_with_ai ? 'none' : '';
+      }
+      const lp = document.getElementById('last-purge');
+      if (lp) lp.textContent = privacyData.last_purge
+        ? tr('manage.privacy.last_purge', { date: privacyData.last_purge.substring(0, 16).replace('T', ' ') })
+        : T['manage.privacy.never_purged'];
+    }
+
+    function renderRetentionNote() {
+      const el = document.getElementById('retention-note');
+      if (!el) return;
+      const n = Number(document.getElementById('retention-select').value);
+      if (n === 0)                        el.textContent = T['manage.privacy.retention_warning'];
+      else if (n < privacyData.monthly_min) el.textContent = tr('manage.privacy.retention_short', { n: privacyData.monthly_min });
+      else                                el.textContent = '';
+    }
+
+    async function saveRetention() {
+      const n = Number(document.getElementById('retention-select').value);
+      renderRetentionNote();
+      try {
+        await fetch('/api/privacy', { method: 'POST', headers: {'Content-Type':'application/json'},
+                                      body: JSON.stringify({ retention_days: n }) });
+      } catch(_) {}
+      loadPrivacy();
+    }
+
+    async function saveSharing() {
+      const on = document.getElementById('share-ai').checked;
+      try {
+        await fetch('/api/privacy', { method: 'POST', headers: {'Content-Type':'application/json'},
+                                      body: JSON.stringify({ share_with_ai: on }) });
+      } catch(_) {}
+      loadPrivacy();
+      checkAiStatus();
+    }
+
+    async function purgeNow() {
+      try { await fetch('/api/privacy/purge', { method: 'POST' }); } catch(_) {}
+      loadPrivacy();
+      loadEvents();
+    }
+
+    // ================================================================ //
+    //  Mise à jour                                                      //
+    // ================================================================ //
+
+    async function triggerUpdate() {
+      const btn = document.getElementById('btn-update');
+      const statusEl = document.getElementById('update-status');
+      const logEl = document.getElementById('update-log');
+      btn.disabled = true;
+      statusEl.style.display = 'block';
+      logEl.style.display = 'none';
+      logEl.textContent = '';
+      try {
+        const r = await fetch('/api/update', { method: 'POST' });
+        const j = await r.json();
+        if (!j.ok) {
+          statusEl.textContent = '✗ ' + apiError(j, 'manage.update.error');
+          statusEl.style.color = '#f87171';
+          btn.disabled = false;
+          return;
+        }
+      } catch (_) {
+        statusEl.textContent = '✗ ' + T['manage.update.error'];
+        statusEl.style.color = '#f87171';
+        btn.disabled = false;
+        return;
+      }
+
+      // Polling du log + countdown avant rechargement
+      let seconds = 50;
+      logEl.style.display = 'block';
+      const poll = setInterval(async () => {
+        try {
+          const r = await fetch('/api/update/log');
+          if (r.status === 401) { clearInterval(poll); clearInterval(tick); location.href = '/login'; return; }
+          const text = await r.text();
+          if (text) { logEl.textContent = text; logEl.scrollTop = logEl.scrollHeight; }
+        } catch (_) {}
+      }, 3000);
+
+      const tick = setInterval(() => {
+        seconds--;
+        statusEl.textContent = tr('manage.update.started', { s: seconds });
+        statusEl.style.color = '#fcd34d';
+        if (seconds <= 0) {
+          clearInterval(tick);
+          clearInterval(poll);
+          location.reload();
+        }
+      }, 1000);
+    }
+
+    // ================================================================ //
+    //  Takeover                                                         //
+    // ================================================================ //
+
+    function openTakeoverModal(profileKey) {
+      const deviceIps = _profileDeviceIps[profileKey] || [];
+      if (!deviceIps.length) return;
+      _takeoverIps = deviceIps;
+      document.getElementById('takeover-ip').value = deviceIps[0] || '';
+      document.getElementById('takeover-password').value = '';
+      document.getElementById('takeover-error').textContent = '';
+      document.getElementById('takeover-modal').classList.add('open');
+      setTimeout(() => document.getElementById('takeover-password').focus(), 50);
+    }
+
+    function closeTakeoverModal() { document.getElementById('takeover-modal').classList.remove('open'); }
+
+    async function confirmTakeover() {
+      const btn = document.getElementById('takeover-confirm-btn');
+      const errEl = document.getElementById('takeover-error');
+      const duration = parseInt(document.getElementById('takeover-duration').value);
+      const password = document.getElementById('takeover-password').value;
+      if (!password) { errEl.textContent = T['modal.takeover.password_required']; return; }
+      btn.disabled = true;
+      errEl.textContent = '';
+      try {
+        for (const ip of _takeoverIps) {
+          const r = await fetch(`/api/device/${encodeURIComponent(ip)}/takeover`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ duration_minutes: duration, password })
+          });
+          const j = await r.json();
+          if (!j.ok) { errEl.textContent = apiError(j, 'modal.takeover.error'); btn.disabled = false; return; }
+        }
+        closeTakeoverModal();
+        loadStatus();
+      } catch (_) {
+        errEl.textContent = T['modal.takeover.error'];
+      }
+      btn.disabled = false;
+    }
+
+    async function releaseDevice(ip) {
+      await fetch(`/api/device/${encodeURIComponent(ip)}/release`, { method: 'POST' });
+      loadStatus();
+    }
+
+    document.getElementById('takeover-modal')?.addEventListener('click', function(e) {
+      if (e.target === this) closeTakeoverModal();
+    });
+
+    // ================================================================ //
+    //  AI status                                                        //
+    // ================================================================ //
+
+    let aiAvailable = true;
+
+    function applyAiStatus(available, noticeMsg) {
+      aiAvailable = available;
+
+      // Rapport : badge + notice + bouton générer
+      document.getElementById('report-ai-badge').style.display  = available ? 'none' : '';
+      document.getElementById('report-ai-notice').style.display = available ? 'none' : '';
+      const genBtn = document.getElementById('report-generate-btn');
+      genBtn.disabled = !available;
+      genBtn.title    = available ? '' : T['dashboard.ai.no_key_report'];
+
+      // Chat : badge + notice + zone saisie
+      document.getElementById('chat-ai-badge').style.display  = available ? 'none' : '';
+      document.getElementById('chat-ai-notice').style.display = available ? 'none' : '';
+      document.getElementById('chat-area').classList.toggle('ai-disabled-area', !available);
+
+      if (!available) {
+        if (noticeMsg) document.getElementById('chat-ai-notice-msg').textContent = noticeMsg;
+        document.getElementById('ai-key-save-status').textContent = '';
+        document.getElementById('ai-key-input').value = '';
+      }
+    }
+
+    async function saveAiKey() {
+      const input  = document.getElementById('ai-key-input');
+      const status = document.getElementById('ai-key-save-status');
+      const key = input.value.trim();
+      if (!key) return;
+
+      status.textContent  = '…';
+      status.style.color  = '#64748b';
+
+      try {
+        const res = await fetch('/api/ai/key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key })
+        }).then(r => r.json());
+
+        if (res.ok) {
+          status.textContent = T['dashboard.ai.key_saved'];
+          status.style.color = '#4ade80';
+          setTimeout(() => applyAiStatus(true), 800);
+        } else {
+          status.textContent = T['dashboard.ai.key_save_error'];
+          status.style.color = '#f87171';
+        }
+      } catch (_) {
+        status.textContent = T['dashboard.ai.key_save_error'];
+        status.style.color = '#f87171';
+      }
+    }
+
+    async function checkAiStatus() {
+      try {
+        const data = await fetch('/api/ai/status').then(r => r.json());
+        applyAiStatus(data.available !== false);
+        // Coupure volontaire : ce n'est ni une panne ni une clé invalide, et le message
+        // doit dire où la rétablir plutôt que de laisser croire à un dysfonctionnement.
+        if (data.reason === 'sharing_disabled') {
+          const box = document.getElementById('chat-messages');
+          if (box) box.innerHTML = `<div class="msg msg-agent">${esc(T['ai.sharing_disabled'])}</div>`;
+        }
+      } catch (_) {
+        // En cas d'erreur réseau, on ne désactive pas par défaut
+      }
+    }
+
+    // ================================================================ //
+    //  Init                                                             //
+    // ================================================================ //
+
+    const _ovDate = document.getElementById("ov-date");
+    if (_ovDate) _ovDate.value = new Date().toISOString().substring(0, 10);
+
+    // ================================================================ //
+    //  Accompagnement premier démarrage (parents non techniques)        //
+    // ================================================================ //
+    const TOUR_STEPS = [
+      { emoji:'🛡️', title:T['tour.step1.title'], body:T['tour.step1.body'] },
+      { emoji:'📊', title:T['tour.step2.title'], body:T['tour.step2.body'] },
+      { emoji:'👥', title:T['tour.step3.title'], body:T['tour.step3.body'] },
+      { emoji:'⚙️', title:T['tour.step4.title'], body:T['tour.step4.body'] },
+      { emoji:'📱', title:T['tour.step5.title'], body:T['tour.step5.body'] },
+      { emoji:'🎉', title:T['tour.step6.title'], body:T['tour.step6.body'] },
+    ];
+    let _tourIdx = 0;
+
+    function _renderTour() {
+      const s = TOUR_STEPS[_tourIdx];
+      document.getElementById('tour-emoji').textContent = s.emoji;
+      document.getElementById('tour-title').textContent = s.title;
+      document.getElementById('tour-body').textContent  = s.body;
+      document.getElementById('tour-dots').innerHTML =
+        TOUR_STEPS.map((_, i) => `<i class="${i === _tourIdx ? 'on' : ''}"></i>`).join('');
+      document.getElementById('tour-prev').style.visibility = _tourIdx === 0 ? 'hidden' : 'visible';
+      document.getElementById('tour-next').textContent =
+        _tourIdx === TOUR_STEPS.length - 1 ? T['tour.nav.create'] : T['tour.nav.next'];
+    }
+    function openTour() {
+      _tourIdx = 0; _renderTour();
+      document.getElementById('tour-overlay').style.display = 'flex';
+    }
+    function closeTour() {
+      document.getElementById('tour-overlay').style.display = 'none';
+      try { localStorage.setItem('protectado_tour_seen', '1'); } catch(e) {}
+    }
+    function tourPrev() { if (_tourIdx > 0) { _tourIdx--; _renderTour(); } }
+    function tourNext() {
+      if (_tourIdx < TOUR_STEPS.length - 1) { _tourIdx++; _renderTour(); }
+      else startProfileCreation();
+    }
+    function startProfileCreation() {
+      closeTour();
+      switchTab('profils');
+      showNewProfileForm();
+    }
+    // Affiche la bannière tant qu'aucun profil n'existe ; ouvre le tour une seule fois.
+    function maybeGuide(isEmpty) {
+      const wb = document.getElementById('welcome-banner');
+      if (wb) wb.style.display = isEmpty ? '' : 'none';
+      let seen = true; try { seen = !!localStorage.getItem('protectado_tour_seen'); } catch(e) {}
+      const open = document.getElementById('tour-overlay').style.display === 'flex';
+      if (isEmpty && !seen && !open) openTour();
+    }
+
+    checkAiStatus();
+    loadStatus();
+    loadReport();
+    loadEvents();
+    loadPendingReports();
+    loadPendingDevices();
+  </script>
+
+
+</body>
+</html>

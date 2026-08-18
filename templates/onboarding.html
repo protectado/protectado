@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protectado</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --ink:#e2e8f0; --muted:#94a3b8;
+          --brand:#38bdf8; --ok:#22c55e; --no:#ef4444; --line:#334155; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; line-height:1.5; }
+  .wrap { max-width:460px; margin:0 auto; padding:20px 16px 48px; }
+  h1 { font-size:1.35rem; margin:8px 0 2px; }
+  .sub { color:var(--muted); font-size:.9rem; margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+          padding:18px; margin-bottom:16px; }
+  label { display:block; font-weight:600; margin:14px 0 6px; }
+  .hint { color:var(--muted); font-size:.82rem; margin:4px 0 0; }
+  input[type=text],input[type=password],select { width:100%; padding:12px; border-radius:10px;
+          border:1px solid var(--line); background:#0b1220; color:var(--ink); font-size:1rem; }
+  button { width:100%; padding:13px; border:0; border-radius:10px; background:var(--brand);
+           color:#04283a; font-weight:700; font-size:1rem; cursor:pointer; margin-top:16px; }
+  button.ghost { background:transparent; color:var(--brand); border:1px solid var(--line); }
+  button:disabled { opacity:.5; }
+  .langbar { display:flex; gap:6px; justify-content:flex-end; margin-bottom:2px; }
+  .langbar .flag { width:auto; margin:0; padding:3px 7px; background:transparent; border:1px solid var(--line);
+          border-radius:8px; font-size:1.05rem; opacity:.45; }
+  .langbar .flag.on { opacity:1; border-color:var(--brand); }
+  .net { display:flex; align-items:center; gap:10px; padding:11px 12px; border:1px solid var(--line);
+         border-radius:10px; margin-top:8px; cursor:pointer; }
+  .net.sel { border-color:var(--brand); background:#0b2436; }
+  .net .sig { margin-left:auto; color:var(--muted); font-size:.8rem; }
+  .msg { padding:11px 12px; border-radius:10px; margin-top:12px; font-size:.9rem; }
+  .msg.ok { background:#052e1a; color:#86efac; border:1px solid #14532d; }
+  .msg.no { background:#310c0c; color:#fca5a5; border:1px solid #7f1d1d; }
+  .step { display:none; } .step.on { display:block; }
+  .warn { background:#332006; color:#fcd34d; border:1px solid #78500a; padding:11px 12px;
+          border-radius:10px; font-size:.85rem; margin-top:10px; }
+  .ipbox { font-size:1.3rem; font-weight:700; color:var(--brand); text-align:center;
+           background:#0b1220; border:1px dashed var(--brand); border-radius:10px; padding:14px; margin:12px 0; }
+  .spin { display:inline-block; width:16px; height:16px; border:2px solid var(--muted);
+          border-top-color:var(--brand); border-radius:50%; animation:s 1s linear infinite; vertical-align:-3px; }
+  @keyframes s { to { transform:rotate(360deg); } }
+  .row { display:flex; gap:8px; } .row button { margin-top:0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="langbar" id="langbar">
+    <button class="flag" data-lang="fr" type="button" aria-label="Français">🇫🇷</button>
+    <button class="flag" data-lang="en" type="button" aria-label="English">🇬🇧</button>
+    <button class="flag" data-lang="es" type="button" aria-label="Español">🇪🇸</button>
+    <button class="flag" data-lang="pt" type="button" aria-label="Português">🇵🇹</button>
+  </div>
+  <h1 data-i18n="ob.title">🛡️ Configuration Protectado</h1>
+  <p class="sub" data-i18n="ob.subtitle">Quelques étapes pour connecter le boîtier et protéger le Wi-Fi des enfants.</p>
+
+  <!-- 1. BOX -->
+  <div class="step on" id="s-box">
+    <div class="card">
+      <label data-i18n="ob.box_label">1. Votre box Internet</label>
+      <p class="hint" data-i18n="ob.box_hint">Choisissez votre réseau Wi-Fi et entrez SA clé (celle de votre box).</p>
+      <div id="nets"></div>
+      <div class="row"><button class="ghost" id="scanBtn" type="button" data-i18n="ob.scan_btn">🔄 Scanner les réseaux</button></div>
+      <label data-i18n="ob.box_key_label">Clé Wi-Fi de la box</label>
+      <input type="password" id="boxKey" data-i18n-ph="ob.box_key_ph" placeholder="mot de passe de votre box" autocomplete="off">
+      <div class="msg no" id="boxErr" style="display:none"></div>
+      <button id="boxNext" type="button" data-i18n="ob.box_next">Tester la connexion</button>
+    </div>
+  </div>
+
+  <!-- 2. KIDS -->
+  <div class="step" id="s-kids">
+    <div class="card">
+      <label data-i18n="ob.kids_label">2. Wi-Fi des enfants</label>
+      <p class="hint"><span data-i18n="ob.kids_name">Nom du réseau :</span> <b id="kidsSsid">—</b></p>
+      <label data-i18n="ob.kids_key_label">Clé du Wi-Fi enfants</label>
+      <input type="text" id="kidsKey" autocomplete="off">
+      <div class="row"><button class="ghost" id="regen" type="button" data-i18n="ob.regen">🎲 Générer une autre clé</button></div>
+      <p class="hint" data-i18n="ob.kids_hint">3 mots faciles à dicter. WPA2 : 8 à 63 caractères.</p>
+      <div class="warn" data-i18n="ob.kids_warn">⚠️ Changer cette clé plus tard déconnectera les appareils des enfants.</div>
+      <button id="kidsNext" type="button" data-i18n="ob.kids_next">Continuer</button>
+    </div>
+  </div>
+
+  <!-- 3. ADMIN -->
+  <div class="step" id="s-admin">
+    <div class="card">
+      <label data-i18n="ob.admin_label">3. Mot de passe d'administration</label>
+      <p class="hint" data-i18n="ob.admin_hint">Pour accéder plus tard au tableau de bord Protectado.</p>
+      <input type="password" id="adminPw" data-i18n-ph="ob.admin_pw_ph" placeholder="nouveau mot de passe (6+ caractères)">
+      <input type="password" id="adminPw2" data-i18n-ph="ob.admin_pw2_ph" placeholder="confirmez" style="margin-top:8px">
+      <!-- Pays : domaine réglementaire Wi-Fi (plan de fréquences et puissances autorisés).
+           Pré-rempli d'après la langue, modifiable — un boîtier installé en Espagne ne doit
+           pas émettre avec le plan français. « Autre » ⇒ domaine mondial, le plus restrictif. -->
+      <!-- Code d'appairage : uniquement en dns_only, où l'assistant est joignable depuis
+           tout le réseau de la maison avant qu'un mot de passe parent n'existe. -->
+      <div id="pairing-block" style="display:none">
+        <label data-i18n="ob.pairing_label" style="margin-top:14px">Code d'appairage</label>
+        <p class="hint" data-i18n="ob.pairing_hint">Affiché à la fin de l'installation du boîtier.</p>
+        <input type="text" id="pairingCode" autocomplete="off" data-i18n-ph="ob.pairing_ph" placeholder="8 caractères">
+      </div>
+      <!-- Fuseau horaire : détecté dans le navigateur du parent, donc exact et purement
+           local. Tout le produit raisonne en heure locale (créneaux, coucher, rapports) :
+           un fuseau faux décale toutes les règles sans que rien ne le signale. -->
+      <label data-i18n="ob.tz_label" style="margin-top:14px">Fuseau horaire</label>
+      <p class="hint" data-i18n="ob.tz_hint">Détecté depuis cet appareil. Les horaires que vous définirez suivent ce fuseau.</p>
+      <select id="timezone"></select>
+
+      <label data-i18n="ob.country_label" style="margin-top:14px">Pays d'installation</label>
+      <p class="hint" data-i18n="ob.country_hint">Détermine les canaux Wi-Fi autorisés. À renseigner correctement.</p>
+      <select id="country"></select>
+      <div class="msg no" id="admErr" style="display:none"></div>
+      <button id="adminNext" type="button" data-i18n="ob.admin_next">Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- 4. RECONNECT -->
+  <div class="step" id="s-recon">
+    <div class="card">
+      <label data-i18n="ob.recon_label">✅ Box connectée !</label>
+      <p class="hint" data-i18n="ob.recon_hint">Le boîtier a rejoint votre réseau. Son adresse :</p>
+      <div class="ipbox" id="ipShown">—</div>
+      <p data-i18n="ob.recon_tofinish">Pour finir :</p>
+      <ol id="reconList" style="padding-left:18px;color:var(--muted)"></ol>
+      <p class="hint" id="reconBookmark" style="margin-top:10px"></p>
+      <p class="hint" id="reconFallback"></p>
+    </div>
+  </div>
+
+  <!-- 4bis. DNS (mode dns_only uniquement) — sans cette étape, le produit ne filtre RIEN -->
+  <div class="step" id="s-dns">
+    <div class="card">
+      <label data-i18n="ob.dns_label">⚠️ Étape indispensable : dites à votre box d'utiliser Protectado</label>
+      <p class="hint" data-i18n="ob.dns_intro">Sans cette étape, Protectado voit et filtre… rien du tout. Notez l'adresse du boîtier :</p>
+      <div class="ipbox" id="dnsIp">—</div>
+      <ol style="padding-left:18px;color:var(--muted)">
+        <li data-i18n="ob.dns_step1"></li>
+        <li data-i18n="ob.dns_step2"></li>
+        <li data-i18n="ob.dns_step3"></li>
+        <li data-i18n="ob.dns_step4"></li>
+      </ol>
+      <p class="hint" data-i18n="ob.dns_help"></p>
+      <button id="dnsNext" type="button" data-i18n="ob.dns_next">C'est fait, continuer</button>
+    </div>
+  </div>
+
+  <!-- 5. FINISH (rechargé via la box) -->
+  <div class="step" id="s-finish">
+    <div class="card">
+      <label data-i18n="ob.finish_label">Dernière étape</label>
+      <p class="hint" id="finishHint" data-i18n="ob.finish_hint">Le boîtier est joignable via votre box. Finalisez la configuration : le Wi-Fi des enfants sera activé et filtré, le réseau de configuration disparaîtra.</p>
+      <button id="finishBtn" type="button" data-i18n="ob.finish_btn">✅ Finir la configuration</button>
+      <div class="msg ok" id="finishMsg" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+
+// Échappement HTML — le SSID d'un réseau scanné est choisi par le POINT D'ACCÈS voisin,
+// pas par nous : un SSID contenant du HTML s'exécutait dans cette page. Idem pour les
+// messages d'erreur remontés par le service privilégié.
+function esc(x){ return String(x===null||x===undefined?'':x)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+const show=id=>document.querySelectorAll('.step').forEach(e=>e.classList.toggle('on',e.id===id));
+let box={ssid:'',key:''}, kidsSsid='', MODE='gateway';
+
+// --- i18n client (sélecteur de langue, sans reload → l'état du wizard est préservé) ---
+const LANGS=['fr','en','es','pt'];
+let T={}, LANG='fr';
+function t(k,vars){ let s=(T[k]!==undefined)?T[k]:k;
+  if(vars) for(const kk in vars) s=s.split('{'+kk+'}').join(vars[kk]); return s; }
+function applyStatic(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ const k=el.getAttribute('data-i18n');
+    if(T[k]!==undefined) el.textContent=T[k]; });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ const k=el.getAttribute('data-i18n-ph');
+    if(T[k]!==undefined) el.placeholder=T[k]; });
+}
+function refreshDynamic(){ if($('#s-recon').classList.contains('on')) renderRecon(); }
+document.addEventListener('change', e=>{
+  if(e.target && e.target.id==='country')  countryTouched=true;
+  if(e.target && e.target.id==='timezone') tzTouched=true;
+});
+async function loadLang(lang){
+  try { T = await (await fetch('/api/i18n/'+lang)).json(); } catch(e) { T={}; }
+  LANG=lang; document.documentElement.lang=lang;
+  applyStatic(); fillTimezones(); fillCountries(); syncCountryToLang(); refreshDynamic();
+  document.querySelectorAll('.flag').forEach(b=>b.classList.toggle('on', b.dataset.lang===lang));
+  try { localStorage.setItem('protectado_lang', lang); } catch(e){}
+}
+function detectLang(){
+  try { const s=localStorage.getItem('protectado_lang'); if(s && LANGS.includes(s)) return s; } catch(e){}
+  const n=(navigator.language||'').slice(0,2).toLowerCase();
+  return LANGS.includes(n) ? n : 'fr';
+}
+document.querySelectorAll('.flag').forEach(b=>b.onclick=()=>loadLang(b.dataset.lang));
+
+// --- fuseau horaire ---
+// Intl donne l'identifiant IANA exact de l'appareil du parent (« Europe/Paris »), sans
+// géolocalisation ni appel réseau. Le pays ne suffirait pas : États-Unis, Canada et Brésil
+// comptent plusieurs fuseaux, l'Espagne et le Portugal aussi.
+function detectTimezone(){
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; }
+  catch(e){ return ''; }
+}
+let tzTouched=false;
+function fillTimezones(){
+  const sel = $('#timezone'); if(!sel) return;
+  // Un changement de langue ne doit pas écraser un fuseau corrigé à la main.
+  if (tzTouched && sel.options.length) return;
+  const detected = detectTimezone();
+  let zones = [];
+  try { zones = Intl.supportedValuesOf('timeZone') || []; } catch(e) { zones = []; }
+  // Navigateur trop ancien pour supportedValuesOf : on n'offre que la valeur détectée,
+  // plutôt qu'une liste incomplète écrite à la main qui vieillirait mal.
+  if (!zones.length && detected) zones = [detected];
+  if (detected && zones.indexOf(detected) === -1) zones.unshift(detected);
+  sel.innerHTML = zones.map(z => `<option value="${esc(z)}">${esc(z)}</option>`).join('');
+  if (detected) sel.value = detected;
+}
+
+// --- pays / domaine réglementaire Wi-Fi ---
+// Liste volontairement courte : les pays où le produit est distribué (fr/en/es/pt) et
+// leurs voisins immédiats. « Autre » (valeur vide) ⇒ domaine mondial "00" côté scripts,
+// qui n'autorise que ce qui est permis partout — jamais un pays deviné à notre place.
+const COUNTRIES=[['FR','France'],['BE','Belgique / België'],['CH','Suisse / Schweiz'],
+  ['CA','Canada'],['LU','Luxembourg'],['MC','Monaco'],
+  ['GB','United Kingdom'],['IE','Ireland'],['US','United States'],
+  ['AU','Australia'],['NZ','New Zealand'],
+  ['ES','España'],['PT','Portugal'],['AD','Andorra'],
+  ['MX','México'],['AR','Argentina'],['CL','Chile'],['CO','Colombia'],['PE','Perú'],
+  ['UY','Uruguay'],['BR','Brasil'],
+  ['DE','Deutschland'],['IT','Italia'],['NL','Nederland'],['AT','Österreich'],
+  ['DK','Danmark'],['SE','Sverige'],['NO','Norge'],['FI','Suomi'],['PL','Polska']];
+const LANG_COUNTRY={fr:'FR',en:'GB',es:'ES',pt:'PT'};
+let countryTouched=false;
+function fillCountries(){
+  const sel=$('#country'); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML=COUNTRIES.map(([c,n])=>`<option value="${esc(c)}">${esc(n)}</option>`).join('')
+    + `<option value="">${esc(t('ob.country_other'))}</option>`;
+  sel.value = cur || LANG_COUNTRY[LANG] || 'FR';
+}
+function syncCountryToLang(){
+  const sel=$('#country'); if(!sel) return;
+  if(!countryTouched) sel.value = LANG_COUNTRY[LANG] || 'FR';
+}
+
+// Les réponses d'erreur portent un error_code stable ; le champ texte reste en
+// français pour les logs. On traduit le code, sinon l'assistant redevenait français
+// au premier problème, dans les quatre langues.
+function apiError(resp, fallbackKey){
+  const code = resp && resp.error_code;
+  if(code && T['error.'+code]!==undefined) return t('error.'+code, (resp&&resp.error_params)||{});
+  if(fallbackKey && T[fallbackKey]!==undefined) return T[fallbackKey];
+  return (resp && resp.error) || t('error.generic');
+}
+
+async function jget(u){ return (await fetch(u)).json(); }
+async function jpost(u,b){ return (await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})})).json(); }
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+// --- scan ---
+async function scan(){
+  $('#nets').innerHTML='<div class="hint"><span class="spin"></span> '+t('ob.scanning')+'</div>';
+  // Si le service privilégié n'a même pas pu être sollicité, le dire tout de suite
+  // plutôt que d'attendre 40 s pour rien.
+  const post = await jpost('/api/onboarding/scan');
+  if(post && post.ok === false){
+    $('#nets').innerHTML='<div class="hint">'+t('ob.no_networks')+'</div>'
+      +`<div class="hint" style="margin-top:6px;opacity:.75;word-break:break-word">${t('ob.scan_failed')} ${esc(post.error||'')}</div>`;
+    return;
+  }
+  // Budget d'attente > (2 s de prise en compte par le runner + 25 s de timeout du scan) :
+  // avec 12 s, un scan lent était annoncé « aucun réseau » alors qu'il aboutissait après.
+  // Le POST efface le résultat précédent, donc un fichier présent = scan TERMINÉ.
+  for(let i=0;i<20;i++){
+    await sleep(2000);
+    const r=await jget('/api/onboarding/scan');
+    if(r && r.networks && r.networks.length){ renderNets(r.networks); return; }
+    if(r && (r.error || r.updated_at)){       // terminé, mais sans réseau utilisable
+      const why = r.error ? `<div class="hint" style="margin-top:6px;opacity:.75;word-break:break-word">${t('ob.scan_failed')} ${esc(r.error)}</div>` : '';
+      $('#nets').innerHTML='<div class="hint">'+t('ob.no_networks')+'</div>'+why;
+      return;
+    }
+  }
+  $('#nets').innerHTML='<div class="hint">'+t('ob.no_networks')+'</div>';
+}
+function renderNets(list){
+  $('#nets').innerHTML='';
+  list.forEach(n=>{ const d=document.createElement('div'); d.className='net';
+    d.innerHTML=`<span>${esc(n.ssid)}</span><span class="sig">${esc(n.signal||'')}</span>`;
+    d.onclick=()=>{ document.querySelectorAll('.net').forEach(x=>x.classList.remove('sel'));
+      d.classList.add('sel'); box.ssid=n.ssid; }; $('#nets').appendChild(d); });
+}
+$('#scanBtn').onclick=scan;
+
+// --- 1. box → validate ---
+$('#boxNext').onclick=async()=>{
+  $('#boxErr').style.display='none';
+  if(!box.ssid){ $('#boxErr').textContent=t('ob.err_choose_net'); $('#boxErr').style.display='block'; return; }
+  box.key=$('#boxKey').value;
+  const btn=$('#boxNext'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> '+t('ob.testing');
+  const vp=await jpost('/api/onboarding/validate',{ssid:box.ssid,key:box.key});
+  if(vp && vp.ok === false){
+    btn.disabled=false; btn.textContent=t('ob.box_next');
+    $('#boxErr').textContent=apiError(vp,'ob.err_box_fail'); $('#boxErr').style.display='block';
+    return;
+  }
+  let res=null;
+  for(let i=0;i<20;i++){ await sleep(2000); const r=await jget('/api/onboarding/validate');
+    if(r && r.updated_at){ res=r; break; } }
+  btn.disabled=false; btn.textContent=t('ob.box_next');
+  if(res && res.ok){ box.ip=res.ip; await goKids(); }
+  else { $('#boxErr').textContent=(res&&res.detail)||t('ob.err_box_fail'); $('#boxErr').style.display='block'; }
+};
+
+// --- 2. kids ---
+async function goKids(){
+  kidsSsid=box.ssid+'-Protectado'; $('#kidsSsid').textContent=kidsSsid;
+  const g=await jget('/api/onboarding/genkey'); $('#kidsKey').value=g.key;
+  show('s-kids');
+}
+$('#regen').onclick=async()=>{ const g=await jget('/api/onboarding/genkey'); $('#kidsKey').value=g.key; };
+$('#kidsNext').onclick=()=>{ const k=$('#kidsKey').value;
+  if(k.length<8||k.length>63){ alert(t('ob.err_kids_len')); return; }
+  show('s-admin'); };
+
+// --- recon (dynamique : dépend de la langue + de l'état) ---
+function renderRecon(){
+  const ip=(box.ip||'').split('/')[0];
+  $('#ipShown').textContent=ip;
+  $('#reconList').innerHTML =
+      `<li>${t('ob.recon_step1',{ssid:esc(box.ssid)})}</li>`
+    + `<li>${t('ob.recon_step2',{url:esc('http://'+ip)})}</li>`
+    + `<li>${t('ob.recon_step3')}</li>`;
+  $('#reconBookmark').textContent=t('ob.recon_bookmark');
+  $('#reconFallback').textContent=t('ob.recon_admin_fallback');
+}
+
+// --- 3. admin → prepare → reconnect ---
+$('#adminNext').onclick=async()=>{
+  $('#admErr').style.display='none';
+  const p=$('#adminPw').value, p2=$('#adminPw2').value;
+  if(p.length<6){ $('#admErr').textContent=t('ob.err_pw_short'); $('#admErr').style.display='block'; return; }
+  if(p!==p2){ $('#admErr').textContent=t('ob.err_pw_mismatch'); $('#admErr').style.display='block'; return; }
+  const r=await jpost('/api/onboarding/prepare',{box_ssid:box.ssid,box_key:box.key,
+    kids_ssid:kidsSsid,kids_key:$('#kidsKey').value,admin_password:p,language:LANG,
+    country:($('#country')?$('#country').value:''),
+    timezone:($('#timezone')?$('#timezone').value:detectTimezone()),
+    pairing_code:($('#pairingCode')?$('#pairingCode').value.trim():'')});
+  if(!r.ok){ $('#admErr').textContent=apiError(r,'ob.err_generic'); $('#admErr').style.display='block'; return; }
+  if(MODE==='dns_only'){ showDnsStep(); return; }    // pas de bascule réseau, mais la box doit pointer ici
+  renderRecon(); show('s-recon');
+};
+
+// Étape DNS (dns_only) : la box attend une ADRESSE IP dans son champ « serveur DNS ».
+// location.hostname ne convient qu'en apparence : depuis l'ajout du mDNS, un parent qui
+// suit la documentation ouvre http://protectado.local et se verrait proposer de saisir
+// « protectado.local » dans sa box, qu'aucune box n'accepte à cet endroit — le parent le
+// plus discipliné serait le seul à échouer. On ne garde donc location.hostname que s'il
+// EST déjà une IPv4 (c'est alors exactement l'adresse par laquelle il nous parle), sinon
+// on prend celle que le serveur calcule face à ce client.
+const IPV4_RE = /^(\d{1,3}\.){3}\d{1,3}$/;
+let SERVER_IP = '';
+
+async function dnsAddress(){
+  if (IPV4_RE.test(location.hostname)) return location.hostname;
+  if (SERVER_IP) return SERVER_IP;
+  try {
+    const st = await jget('/api/onboarding/state');
+    if (st && st.local_ip) { SERVER_IP = st.local_ip; return SERVER_IP; }
+  } catch(e){ /* repli ci-dessous */ }
+  return location.hostname;   // dernier recours : mieux qu'un écran vide
+}
+
+async function showDnsStep(){
+  show('s-dns');
+  $('#dnsIp').textContent = await dnsAddress();
+}
+$('#dnsNext').onclick = () => goFinish(true);
+
+// Prépare l'étape « finir » selon le mode (dns_only = pas de reconnexion box).
+function goFinish(dnsOnly){
+  if(dnsOnly){ $('#finishHint').setAttribute('data-i18n','ob.finish_hint_dns'); applyStatic(); }
+  show('s-finish');
+}
+
+// --- 5. finish ---
+$('#finishBtn').onclick=async()=>{
+  const btn=$('#finishBtn'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> '+t('ob.finalizing');
+  await jpost('/api/onboarding/finish');
+  $('#finishMsg').style.display='block';
+  $('#finishMsg').innerHTML='<span class="spin"></span> '
+    + t(MODE==='dns_only' ? 'ob.finish_msg_dns' : 'ob.finish_msg_gw');
+  waitForBack();
+};
+
+// Sonde le boîtier jusqu'à son retour EN ÉTAT CONFIGURÉ, puis va au dashboard.
+async function waitForBack(){
+  while(true){
+    await sleep(4000);
+    try {
+      const r = await fetch('/api/onboarding/state', {cache:'no-store'});
+      if (r.redirected) { location.href = '/'; return; }   // configuré → dashboard/login
+    } catch(e){ /* boîtier en reboot — on réessaie */ }
+  }
+}
+
+// --- au chargement : langue (navigateur, mémorisable) puis parcours selon le MODE ---
+(async()=>{
+  await loadLang(detectLang());
+  const st=await jget('/api/onboarding/state');
+  MODE = st.mode || 'gateway';
+  if (st.local_ip) SERVER_IP = st.local_ip;
+  if(st.pairing_required){ const b=$('#pairing-block'); if(b) b.style.display=''; }
+  if(MODE==='dns_only'){
+    // Pas d'AP captif, pas de box : filtrage DNS sur le réseau existant.
+    $('#s-box').innerHTML = '';                              // masque les étapes box/enfants
+    $('.sub').setAttribute('data-i18n','ob.subtitle_dns');   // sous-titre adapté
+    $('#finishHint').setAttribute('data-i18n','ob.finish_hint_dns');
+    applyStatic();
+    if(st.pending){ goFinish(true); }                        // config déjà préparée → finir
+    else { show('s-admin'); }                                // → directement le mot de passe admin
+    return;
+  }
+  // Mode gateway (portail captif via la box).
+  if(st.pending && st.validation && st.validation.ok){ show('s-finish'); }
+  else { scan(); }
+})();
+</script>
+</body>
+</html>

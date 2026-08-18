@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ t['admin_info.title'] }}</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --ink:#e2e8f0; --muted:#94a3b8;
+          --brand:#38bdf8; --line:#334155; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); min-height:100vh;
+         display:flex; align-items:center; justify-content:center; padding:20px;
+         font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; line-height:1.5; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px;
+          padding:26px 22px; max-width:420px; width:100%; text-align:center; }
+  h1 { font-size:1.3rem; margin:0 0 4px; }
+  .lead { color:var(--muted); font-size:.9rem; margin:0 0 18px; }
+  .from { color:var(--muted); font-size:.85rem; margin:0 0 8px; }
+  .ip { font-size:1.5rem; font-weight:800; color:var(--brand); background:#0b1220;
+        border:1px dashed var(--brand); border-radius:12px; padding:16px; word-break:break-all; }
+  .bookmark { color:#7dd3fc; font-size:.85rem; margin:16px 0 0; }
+  .note { color:var(--muted); font-size:.78rem; margin:18px 0 0; padding-top:14px;
+          border-top:1px solid var(--line); }
+  .card { text-align:left; }
+  .card > h1, .card > .lead, .card > .from, .card > .ip, .card > .bookmark { text-align:center; }
+  .sec { margin-top:20px; padding-top:16px; border-top:1px solid var(--line); }
+  .sec h2 { font-size:.95rem; margin:0 0 8px; }
+  .mode { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; font-size:1.05rem;
+          font-weight:700; }
+  .mode .until { font-size:.82rem; font-weight:400; color:var(--muted); }
+  .slots { list-style:none; padding:0; margin:8px 0 0; }
+  .slots li { display:flex; justify-content:space-between; gap:12px; font-size:.85rem;
+              padding:5px 0; border-bottom:1px solid #0f172a; }
+  .slots .m { color:var(--muted); }
+  .priv { color:var(--muted); font-size:.82rem; margin:6px 0 0; }
+  .seen { background:#2a2109; border:1px solid #a16207; color:#fbbf24; border-radius:8px;
+          padding:9px 11px; font-size:.8rem; margin-top:10px; }
+  .badge { display:inline-block; border-radius:9999px; padding:2px 9px; font-size:.72rem;
+           font-weight:700; }
+  .b-blocked{background:#450a0a;color:#f87171} .b-work{background:#0c1a4b;color:#60a5fa}
+  .b-permissive{background:#2e1065;color:#c084fc} .b-free{background:#052e16;color:#4ade80}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>🛡️ {{ t['admin_info.title'] }}</h1>
+    <p class="lead">{{ t['admin_info.lead'] }}</p>
+    {% if ip %}
+      <p class="from">{{ t['admin_info.from_home'] }}</p>
+      <div class="ip">http://{{ ip }}</div>
+      <p class="bookmark">⭐ {{ t['admin_info.bookmark'] }}</p>
+    {% else %}
+      <div class="ip">{{ t['admin_info.no_ip'] }}</div>
+    {% endif %}
+    <p class="note">{{ t['admin_info.note'] }}</p>
+
+    <!-- Bloc « ma situation » — rempli seulement si l'appareil est rattaché à un profil.
+         Règles et politique uniquement : JAMAIS d'historique de navigation, un frère ou
+         une sœur a accès à cette page depuis le même réseau. -->
+    <div class="sec" id="mine" style="display:none">
+      <h2 id="mine-title">{{ t['child.my_access'] }}</h2>
+      <div class="mode">
+        <span id="mode-badge" class="badge"></span>
+        <span class="until" id="mode-until"></span>
+      </div>
+      <ul class="slots" id="today-slots"></ul>
+    </div>
+
+    <div class="sec">
+      <h2>{{ t['child.privacy_title'] }}</h2>
+      <p class="priv">{{ t['child.privacy_records'] }}</p>
+      <p class="priv" id="retention"></p>
+      <p class="priv" id="sharing"></p>
+      <div class="seen" id="seen" style="display:none"></div>
+    </div>
+  </div>
+
+<script>
+// Page servie SANS authentification (être sur le réseau enfants suffit). Elle n'affiche
+// que des règles et une politique — aucune donnée de navigation. Tout ce qui vient de
+// l'API est échappé : les valeurs traversent le réseau et rien ne garantit leur forme.
+const T = {{ t | tojson }};
+function esc(x){ return String(x===null||x===undefined?'':x)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function tr(k, vars){ let s = (T[k]!==undefined) ? T[k] : k;
+  if(vars) for(const n in vars) s = s.split('{'+n+'}').join(vars[n]);
+  return s; }
+
+const MODE_KEY = { blocked:'mode.blocked', work:'mode.work',
+                   permissive:'mode.permissive', free:'mode.free', normal:'mode.normal' };
+
+(async () => {
+  let d;
+  try { d = await (await fetch('/api/child/status', {cache:'no-store'})).json(); }
+  catch(e){ return; }
+
+  document.getElementById('retention').textContent =
+    d.retention_days > 0 ? tr('child.retention', { n: d.retention_days })
+                         : T['child.retention_unlimited'];
+  document.getElementById('sharing').textContent =
+    d.share_with_ai ? T['child.sharing_on'] : T['child.sharing_off'];
+
+  if (!d.recognized) return;
+
+  document.getElementById('mine').style.display = '';
+  document.getElementById('mine-title').textContent = tr('child.my_access_named', { name: d.name });
+
+  const badge = document.getElementById('mode-badge');
+  badge.className = 'badge b-' + String(d.mode || '').replace(/[^a-z]/g, '');
+  badge.textContent = T[MODE_KEY[d.mode]] || esc(d.mode || '');
+  document.getElementById('mode-until').textContent =
+    d.slot_end ? tr('child.until', { time: d.slot_end }) : '';
+
+  const list = document.getElementById('today-slots');
+  list.innerHTML = (d.today || []).length
+    ? d.today.map(s => `<li><span>${esc(s.start)} – ${esc(s.end)}</span>`
+        + `<span class="m">${esc(T[MODE_KEY[s.mode]] || s.mode)}</span></li>`).join('')
+    : `<li><span class="m">${esc(T['child.no_slot_today'])}</span></li>`;
+
+  // Consultations détaillées récentes : l'enfant est informé que son historique a été
+  // regardé, exactement comme le parent le voit dans son propre journal.
+  if ((d.recent_privacy_access || []).length) {
+    const el = document.getElementById('seen');
+    el.style.display = '';
+    el.textContent = tr('child.recently_viewed', {
+      dates: d.recent_privacy_access.map(a => a.date).join(', ')
+    });
+  }
+})();
+</script>
+</body>
+</html>

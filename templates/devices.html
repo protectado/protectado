@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ t['app.name'] }} — {{ t['devices.title'] }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ---- Header ---- */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      border-bottom: 1px solid #1e293b;
+      position: sticky;
+      top: 0;
+      background: #0f172a;
+      z-index: 10;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header-left h1 { font-size: 1.2rem; font-weight: 700; color: #f8fafc; }
+    .tabs {
+      display: flex;
+      gap: 2px;
+      padding: 0 24px;
+      border-bottom: 1px solid #1e293b;
+      background: #0f172a;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #64748b;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: -1px;
+      text-decoration: none;
+    }
+    .tab-btn:hover { color: #94a3b8; }
+    .tab-btn.active { color: #e2e8f0; border-bottom-color: #3b82f6; }
+
+    .back-link {
+      color: #64748b; font-size: 0.82rem; text-decoration: none;
+      border: 1px solid #334155; padding: 5px 12px; border-radius: 8px;
+      transition: all 0.15s;
+    }
+    .back-link:hover { color: #e2e8f0; border-color: #64748b; }
+    .logout-btn {
+      background: transparent;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .logout-btn:hover { border-color: #64748b; color: #e2e8f0; }
+
+    /* ---- Content ---- */
+    .content { padding: 24px; max-width: 1100px; margin: 0 auto; }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .page-title { font-size: 1.15rem; font-weight: 600; color: #f8fafc; }
+    .page-subtitle { color: #64748b; font-size: 0.82rem; margin-top: 3px; }
+
+    .btn-scan {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-scan:hover:not(:disabled) { border-color: #64748b; color: #e2e8f0; }
+    .btn-scan:disabled { opacity: 0.5; cursor: default; }
+
+    /* ---- Sections ---- */
+    .section { margin-bottom: 28px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .section-title { font-size: 0.95rem; font-weight: 600; }
+    .section-count {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #64748b;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 1px 8px;
+      border-radius: 9999px;
+    }
+    .section-ok   .section-title { color: #4ade80; }
+    .section-warn .section-title { color: #fbbf24; }
+
+    /* ---- Table ---- */
+    .device-table {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      overflow: hidden;
+      width: 100%;
+    }
+    .device-table table { width: 100%; border-collapse: collapse; }
+    .device-table th {
+      background: #0f172a;
+      text-align: left;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      padding: 10px 16px;
+      border-bottom: 1px solid #334155;
+    }
+    .device-table td {
+      padding: 12px 16px;
+      font-size: 0.855rem;
+      border-bottom: 1px solid #1e293b;
+      vertical-align: middle;
+    }
+    .device-table tr:last-child td { border-bottom: none; }
+    .device-table tr:hover td { background: #0f172a44; }
+
+    .cell-ip { font-family: monospace; color: #93c5fd; font-size: 0.82rem; }
+    .cell-hostname { color: #64748b; font-size: 0.78rem; margin-top: 2px; }
+    .cell-hostname.empty { color: #334155; font-style: italic; }
+    .cell-mac { font-family: monospace; color: #475569; font-size: 0.75rem; }
+    .cell-time { color: #64748b; font-size: 0.8rem; }
+
+    .name-input {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #e2e8f0;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 0.855rem;
+      font-weight: 500;
+      width: 100%;
+      max-width: 180px;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .name-input::placeholder { color: #334155; font-weight: 400; font-style: italic; }
+    .name-input:hover { border-color: #334155; }
+    .name-input:focus { border-color: #3b82f6; background: #0f172a; }
+    .name-input.saving { border-color: #64748b; opacity: 0.7; }
+    .name-input.saved  { border-color: #4ade80; }
+    .name-input.error  { border-color: #f87171; }
+
+    .profile-select {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      outline: none;
+      cursor: pointer;
+      width: 100%;
+      max-width: 180px;
+    }
+    .profile-select:focus { border-color: #3b82f6; }
+    .profile-select.changed { border-color: #3b82f6; }
+
+    /* bypass note */
+    .bypass-note {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #fbbf24;
+      font-size: 0.8rem;
+    }
+    .bypass-note::before { content: "⚠️"; }
+
+    /* ---- Empty state ---- */
+    .empty-state {
+      padding: 32px;
+      text-align: center;
+      color: #475569;
+      font-size: 0.875rem;
+    }
+
+    /* ---- Save bar ---- */
+    .save-bar {
+      position: sticky;
+      bottom: 0;
+      background: #0f172a;
+      border-top: 1px solid #1e293b;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .save-status { font-size: 0.82rem; color: #64748b; }
+    .save-status.ok   { color: #4ade80; }
+    .save-status.err  { color: #f87171; }
+    .btn-save {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-save:hover:not(:disabled) { background: #2563eb; }
+    .btn-save:disabled { background: #334155; color: #475569; cursor: default; }
+
+    /* ---- Spinner ---- */
+    .spin {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid #334155;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 640px) {
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .device-table th:nth-child(2),
+      .device-table td:nth-child(2),
+      .device-table th:nth-child(5),
+      .device-table td:nth-child(5) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-left">
+      <h1>🛡️ {{ t['app.name'] }}</h1>
+    </div>
+    <form id="logout-form" action="/logout" method="POST" style="display:none"></form>
+    <button class="logout-btn" onclick="document.getElementById('logout-form').submit()">{{ t['nav.logout'] }}</button>
+  </header>
+
+  <div class="tabs">
+    <a class="tab-btn" href="/" style="text-decoration:none">📊 {{ t['nav.dashboard'] }}</a>
+    <a class="tab-btn" href="/?tab=gestion" style="text-decoration:none">⚙️ {{ t['nav.manage'] }}</a>
+    <a class="tab-btn active" href="/devices" style="text-decoration:none">📱 {{ t['nav.devices'] }}</a>
+    <a class="tab-btn" href="/?tab=profils" style="text-decoration:none">👥 {{ t['nav.profiles'] }}</a>
+  </div>
+
+  <div class="content">
+
+    <div class="page-header">
+      <div>
+        <div class="page-title">{{ t['devices.title'] }}</div>
+        <div class="page-subtitle" id="page-sub">{{ t['devices.desc'] }}</div>
+      </div>
+      <button class="btn-scan" id="btn-scan" onclick="loadDevices()">
+        <span id="scan-icon">↻</span> {{ t['devices.scan_btn'] }}
+      </button>
+    </div>
+
+    <!-- Pi-hole injoignable : une page vide ne doit jamais passer pour « aucun appareil » -->
+    <div id="pihole-error" style="display:none;margin-bottom:16px;padding:12px 14px;background:#2a0f0f;border:1px solid #b91c1c;border-radius:8px;color:#fecaca;font-size:0.85rem"></div>
+
+    <!-- ✅ Pi-hole -->
+    <div class="section section-ok">
+      <div class="section-header">
+        <span class="section-title">✅ {{ t['devices.section_pihole'] }}</span>
+        <span class="section-count" id="count-pihole">0</span>
+      </div>
+      <div class="device-table" id="table-pihole">
+        <div class="empty-state" id="empty-pihole">{{ t['devices.scan_prompt'] }}</div>
+      </div>
+    </div>
+
+    <!-- ⚠️ Bypass suspects -->
+    <div class="section section-warn">
+      <div class="section-header">
+        <span class="section-title">⚠️ {{ t['devices.section_bypass'] }}</span>
+        <span class="section-count" id="count-bypass">0</span>
+      </div>
+      <div class="device-table" id="table-bypass">
+        <div class="empty-state" id="empty-bypass">{{ t['devices.scan_prompt'] }}</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Save bar -->
+  <div class="save-bar">
+    <span class="save-status" id="save-status"></span>
+    <button class="btn-save" id="btn-save" onclick="saveAssignments()" disabled>
+      {{ t['devices.assign_btn_save'] }}
+    </button>
+  </div>
+
+<script>
+  const T = {{ t | tojson }};
+  function tr(key) { return T[key] || key; }
+
+  // Pending profile changes: ip → {profile_key, mac}
+  const pending = new Map();
+
+  let allProfiles = [];
+
+  // ============================================================ //
+  //  Load                                                        //
+  // ============================================================ //
+  async function loadDevices() {
+    const btn = document.getElementById('btn-scan');
+    const icon = document.getElementById('scan-icon');
+    btn.disabled = true;
+    icon.innerHTML = '<span class="spin"></span>';
+
+    try {
+      const data = await fetch('/api/devices').then(r => r.json());
+      const errBox = document.getElementById('pihole-error');
+      if (data.pihole_error) {
+        errBox.textContent = tr('devices.pihole_unreachable') + ' ' + data.pihole_error;
+        errBox.style.display = '';
+      } else {
+        errBox.style.display = 'none';
+      }
+      allProfiles = data.profiles || [];
+      renderPihole(data.pihole || []);
+      renderBypass(data.bypass || []);
+      pending.clear();
+      updateSaveBtn();
+    } catch (_) {
+      document.getElementById('save-status').textContent = tr('devices.conn_error');
+      document.getElementById('save-status').className = 'save-status err';
+    } finally {
+      btn.disabled = false;
+      icon.textContent = '↻';
+    }
+  }
+
+  // ============================================================ //
+  //  Render Pi-hole table                                        //
+  // ============================================================ //
+  function renderPihole(devices) {
+    const wrap = document.getElementById('table-pihole');
+    document.getElementById('count-pihole').textContent = devices.length;
+
+    if (!devices.length) {
+      wrap.innerHTML = `<div class="empty-state">${tr('devices.none')}</div>`;
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>${tr('devices.col_ip')}</th>
+            <th>${tr('devices.col_mac')}</th>
+            <th>${tr('devices.col_device')}</th>
+            <th>${tr('devices.col_name')}</th>
+            <th>${tr('devices.col_lastseen')}</th>
+            <th>${tr('devices.col_profile')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${devices.map(d => renderPiholeRow(d)).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  function renderPiholeRow(d) {
+    const detectedLabel = d.hostname
+      ? `<div class="cell-hostname">${esc(d.hostname)}</div>`
+      : `<div class="cell-hostname empty">${tr('devices.unknown_device')}</div>`;
+
+    const lastSeen = d.last_seen ? relativeTime(d.last_seen) : '—';
+
+    const options = [
+      `<option value="">${tr('devices.unassigned_parent')}</option>`,
+      ...allProfiles.map(p =>
+        `<option value="${esc(p.key)}" ${d.assigned_profile === p.key ? 'selected' : ''}>${esc(p.name)}</option>`
+      )
+    ].join('');
+
+    return `
+      <tr>
+        <td><span class="cell-ip">${esc(d.ip)}</span></td>
+        <td><span class="cell-mac">${esc(d.mac || '—')}</span></td>
+        <td>${detectedLabel}</td>
+        <td>
+          <input
+            class="name-input"
+            type="text"
+            value="${esc(d.custom_name || '')}"
+            placeholder="${esc(tr('devices.name_placeholder'))}"
+            data-ip="${esc(d.ip)}"
+            data-orig="${esc(d.custom_name || '')}"
+            onblur="saveName(this)"
+            onkeydown="if(event.key==='Enter'){this.blur()}"
+          >
+        </td>
+        <td><span class="cell-time">${lastSeen}</span></td>
+        <td>
+          <select class="profile-select"
+            data-ip="${esc(d.ip)}"
+            data-mac="${esc(d.mac || '')}"
+            data-orig="${esc(d.assigned_profile || '')}"
+            onchange="onProfileChange(this)">
+            ${options}
+          </select>
+        </td>
+      </tr>`;
+  }
+
+  // ============================================================ //
+  //  Render bypass table                                         //
+  // ============================================================ //
+  function renderBypass(devices) {
+    const wrap = document.getElementById('table-bypass');
+    document.getElementById('count-bypass').textContent = devices.length;
+
+    if (!devices.length) {
+      wrap.innerHTML = `<div class="empty-state">${tr('devices.bypass_none')}</div>`;
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>${tr('devices.col_ip')}</th>
+            <th>${tr('devices.col_mac')}</th>
+            <th>${tr('devices.col_device')}</th>
+            <th>${tr('devices.col_note')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${devices.map(d => `
+            <tr>
+              <td><span class="cell-ip">${esc(d.ip)}</span></td>
+              <td><span class="cell-mac">${esc(d.mac || '—')}</span></td>
+              <td>${d.hostname
+                ? `<span class="cell-hostname">${esc(d.hostname)}</span>`
+                : `<span class="cell-hostname empty">${tr('devices.unknown_device')}</span>`
+              }</td>
+              <td><span class="bypass-note">${tr('devices.bypass_note')}</span></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ============================================================ //
+  //  Name inline save                                            //
+  // ============================================================ //
+  async function saveName(input) {
+    const ip   = input.dataset.ip;
+    const orig = input.dataset.orig;
+    const name = input.value.trim();
+
+    if (name === orig) return;
+
+    input.classList.add('saving');
+    input.disabled = true;
+
+    try {
+      const res = await fetch('/api/devices/name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip, name })
+      }).then(r => r.json());
+
+      if (res.ok) {
+        input.dataset.orig = name;
+        input.value = name;
+        input.classList.remove('saving');
+        input.classList.add('saved');
+        setTimeout(() => input.classList.remove('saved'), 1500);
+      } else {
+        input.classList.remove('saving');
+        input.classList.add('error');
+        setTimeout(() => { input.classList.remove('error'); input.value = orig; input.dataset.orig = orig; }, 2000);
+      }
+    } catch (_) {
+      input.classList.remove('saving');
+      input.classList.add('error');
+      setTimeout(() => { input.classList.remove('error'); input.value = orig; input.dataset.orig = orig; }, 2000);
+    } finally {
+      input.disabled = false;
+    }
+  }
+
+  // ============================================================ //
+  //  Profile change tracking                                     //
+  // ============================================================ //
+  function onProfileChange(select) {
+    const ip  = select.dataset.ip;
+    const mac = select.dataset.mac;
+    const orig = select.dataset.orig;
+    const val  = select.value;
+
+    if (val !== orig) {
+      pending.set(ip, { profile_key: val || null, mac });
+      select.classList.add('changed');
+    } else {
+      pending.delete(ip);
+      select.classList.remove('changed');
+    }
+    updateSaveBtn();
+  }
+
+  function updateSaveBtn() {
+    const btn = document.getElementById('btn-save');
+    btn.disabled = pending.size === 0;
+  }
+
+  // ============================================================ //
+  //  Save                                                        //
+  // ============================================================ //
+  async function saveAssignments() {
+    if (!pending.size) return;
+
+    const btn = document.getElementById('btn-save');
+    const status = document.getElementById('save-status');
+    btn.disabled = true;
+    status.textContent = '…';
+    status.className = 'save-status';
+
+    let ok = 0;
+    let err = 0;
+
+    for (const [ip, { profile_key, mac }] of pending.entries()) {
+      try {
+        const res = await fetch('/api/devices/assign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip, mac, profile_key })
+        }).then(r => r.json());
+
+        if (res.ok) ok++;
+        else err++;
+      } catch (_) {
+        err++;
+      }
+    }
+
+    if (err === 0) {
+      status.textContent = `✓ ${ok} ${tr('devices.saved_ok')}`;
+      status.className = 'save-status ok';
+      pending.clear();
+      // Rafraîchir pour mettre à jour les états "orig"
+      await loadDevices();
+    } else {
+      status.textContent = tr('devices.save_error');
+      status.className = 'save-status err';
+      btn.disabled = false;
+    }
+  }
+
+  // ============================================================ //
+  //  Helpers                                                     //
+  // ============================================================ //
+  function esc(s) {
+    return String(s ?? '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');   // aligné sur index.html : couvre aussi les attributs à quotes simples
+  }
+
+  function relativeTime(iso) {
+    try {
+      const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+      if (diff < 60)   return tr('devices.time_just_now');
+      if (diff < 3600) return `${Math.floor(diff / 60)} ${tr('devices.time_min_ago')}`;
+      if (diff < 86400)return `${Math.floor(diff / 3600)} ${tr('devices.time_h_ago')}`;
+      return new Date(iso).toLocaleDateString();
+    } catch (_) {
+      return iso;
+    }
+  }
+
+  // ============================================================ //
+  //  Init                                                        //
+  // ============================================================ //
+  window.addEventListener('DOMContentLoaded', loadDevices);
+</script>
+</body>
+</html>
