@@ -1,0 +1,19 @@
+# Runtime data — never commit
+config.json
+familywatch.db
+*.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Logs
+*.log
+
+# Documents de conception internes — NE JAMAIS publier : décrire précisément comment on
+# détecte les contournements revient à publier la marche à suivre pour y échapper.
+# Ils vivent dans le dépôt privé protectado-backend.
+docs/design/

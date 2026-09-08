@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ t['app.name'] }} — {{ t['devices.title'] }}</title>
+  {% include "_theme.html" %}
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    /* ---- Header ---- */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--line-card);
+      position: sticky;
+      top: 0;
+      background: var(--sunken);
+      z-index: 10;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header-left h1 { font-size: 1.2rem; font-weight: 700; color: var(--ink-strong); }
+    .tabs {
+      display: flex;
+      gap: 2px;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--line-card);
+      background: var(--sunken);
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--faint);
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: -1px;
+      text-decoration: none;
+    }
+    .tab-btn:hover { color: var(--muted); }
+    .tab-btn.active { color: var(--ink); border-bottom-color: var(--primary); }
+
+    .back-link {
+      color: var(--faint); font-size: 0.82rem; text-decoration: none;
+      border: 1px solid var(--line); padding: 5px 12px; border-radius: 8px;
+      transition: all 0.15s;
+    }
+    .back-link:hover { color: var(--ink); border-color: var(--faint); }
+    .logout-btn {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .logout-btn:hover { border-color: var(--faint); color: var(--ink); }
+
+    /* ---- Content ---- */
+    .content { padding: 24px; max-width: 1100px; margin: 0 auto; }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .page-title { font-size: 1.15rem; font-weight: 600; color: var(--ink-strong); }
+    .page-subtitle { color: var(--faint); font-size: 0.82rem; margin-top: 3px; }
+
+    .btn-scan {
+      background: var(--card);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-scan:hover:not(:disabled) { border-color: var(--faint); color: var(--ink); }
+    .btn-scan:disabled { opacity: 0.5; cursor: default; }
+
+    /* ---- Sections ---- */
+    .section { margin-bottom: 28px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .section-title { font-size: 0.95rem; font-weight: 600; }
+    .section-count {
+      background: var(--card);
+      border: 1px solid var(--line);
+      color: var(--faint);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 1px 8px;
+      border-radius: 9999px;
+    }
+    .section-desc { color: var(--faint); font-size: 0.78rem; margin: 6px 0 10px; line-height: 1.5; }
+    .section-ok   .section-title { color: var(--ok); }
+    .section-warn .section-title { color: var(--warn); }
+
+    /* ---- Table ---- */
+    .device-table {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      width: 100%;
+    }
+    .device-table table { width: 100%; border-collapse: collapse; }
+    .device-table th {
+      background: var(--sunken);
+      text-align: left;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .device-table td {
+      padding: 12px 16px;
+      font-size: 0.855rem;
+      border-bottom: 1px solid var(--line-card);
+      vertical-align: middle;
+    }
+    .device-table tr:last-child td { border-bottom: none; }
+    .device-table tr:hover td { background: var(--row-hover); }
+
+    .cell-ip { font-family: monospace; color: var(--accent-soft); font-size: 0.82rem; }
+    .cell-hostname { color: var(--faint); font-size: 0.78rem; margin-top: 2px; }
+    .cell-hostname.empty { color: var(--dimmer); font-style: italic; }
+    .cell-mac { font-family: monospace; color: var(--dim); font-size: 0.75rem; }
+    .cell-time { color: var(--faint); font-size: 0.8rem; }
+
+    .name-input {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--ink);
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 0.855rem;
+      font-weight: 500;
+      width: 100%;
+      max-width: 180px;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .name-input::placeholder { color: var(--dimmer); font-weight: 400; font-style: italic; }
+    .name-input:hover { border-color: var(--line); }
+    .name-input:focus { border-color: var(--primary); background: var(--sunken); }
+    .name-input.saving { border-color: var(--faint); opacity: 0.7; }
+    .name-input.saved  { border-color: var(--ok); }
+    .name-input.error  { border-color: var(--no); }
+
+    .profile-select {
+      background: var(--sunken);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      outline: none;
+      cursor: pointer;
+      width: 100%;
+      max-width: 180px;
+    }
+    .profile-select:focus { border-color: var(--primary); }
+    .profile-select.changed { border-color: var(--primary); }
+
+    /* bypass note */
+    .bypass-note {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--warn);
+      font-size: 0.8rem;
+    }
+    .bypass-note::before { content: "⚠️"; }
+
+    /* ---- Empty state ---- */
+    .empty-state {
+      padding: 32px;
+      text-align: center;
+      color: var(--dim);
+      font-size: 0.875rem;
+    }
+
+    /* ---- Save bar ---- */
+    .save-bar {
+      position: sticky;
+      bottom: 0;
+      background: var(--sunken);
+      border-top: 1px solid var(--line-card);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .save-status { font-size: 0.82rem; color: var(--faint); }
+    .save-status.ok   { color: var(--ok); }
+    .save-status.err  { color: var(--no); }
+    .btn-save {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-save:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-save:disabled { background: var(--line); color: var(--dim); cursor: default; }
+
+    /* ---- Spinner ---- */
+    .spin {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid var(--line);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 640px) {
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .device-table th:nth-child(2),
+      .device-table td:nth-child(2),
+      .device-table th:nth-child(5),
+      .device-table td:nth-child(5) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-left">
+      <h1>🛡️ {{ t['app.name'] }}</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+    <button type="button" class="theme-btn" id="theme-toggle" aria-pressed="false"
+            aria-label="{{ t['theme.toggle'] }}" title="{{ t['theme.toggle'] }}">
+      <span class="icon-moon" aria-hidden="true">🌙</span><span class="icon-sun" aria-hidden="true">☀️</span>
+    </button>
+    <form id="logout-form" action="/logout" method="POST" style="display:none"></form>
+    <button class="logout-btn" onclick="document.getElementById('logout-form').submit()">{{ t['nav.logout'] }}</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <a class="tab-btn" href="/" style="text-decoration:none">📊 {{ t['nav.dashboard'] }}</a>
+    <a class="tab-btn" href="/?tab=gestion" style="text-decoration:none">⚙️ {{ t['nav.manage'] }}</a>
+    <a class="tab-btn active" href="/devices" style="text-decoration:none">📱 {{ t['nav.devices'] }}</a>
+    <a class="tab-btn" href="/?tab=profils" style="text-decoration:none">👥 {{ t['nav.profiles'] }}</a>
+  </div>
+
+  <div class="content">
+
+    <div class="page-header">
+      <div>
+        <div class="page-title">{{ t['devices.title'] }}</div>
+        <div class="page-subtitle" id="page-sub">{{ t['devices.desc'] }}</div>
+      </div>
+      <!-- Deux gestes distincts, et le libellé doit le dire : « Actualiser » relit ce que
+           le boîtier sait déjà (Pi-hole + dernier inventaire), « Rechercher des appareils »
+           provoque un vrai scan du réseau. L'ancien bouton unique s'appelait « Scanner le
+           réseau » et ne faisait que la première. -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-scan" id="btn-scan" onclick="loadDevices()">
+          <span id="scan-icon">↻</span> {{ t['devices.scan_btn'] }}
+        </button>
+        <button class="btn-scan" id="btn-search" onclick="searchDevices()" style="display:none">
+          <span id="search-icon">🔍</span> {{ t['devices.search_btn'] }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Résultat de la recherche active (arp-scan) : le parent doit voir qu'il se passe
+         quelque chose, la recherche pouvant durer près d'une minute. -->
+    <div id="search-status" style="display:none;margin-bottom:16px;padding:10px 14px;background:var(--info-bg);border:1px solid var(--info-border);border-radius:8px;color:var(--ink-soft);font-size:0.82rem"></div>
+
+    <!-- Pi-hole injoignable : une page vide ne doit jamais passer pour « aucun appareil » -->
+    <div id="pihole-error" style="display:none;margin-bottom:16px;padding:12px 14px;background:var(--no-bg-2);border:1px solid var(--no-border-2);border-radius:8px;color:var(--no-ink);font-size:0.85rem"></div>
+
+    <!-- ✅ Pi-hole -->
+    <div class="section section-ok">
+      <div class="section-header">
+        <span class="section-title">✅ {{ t['devices.section_pihole'] }}</span>
+        <span class="section-count" id="count-pihole">0</span>
+      </div>
+      <div class="device-table" id="table-pihole">
+        <div class="empty-state" id="empty-pihole">{{ t['devices.scan_prompt'] }}</div>
+      </div>
+    </div>
+
+    <!-- Hors filtrage DNS. Le titre ne dit plus « bypass suspect » : la section montre
+         TOUT appareil inconnu du filtrage, imprimante et TV comprises, et les accuser en
+         bloc revient à noyer la seule ligne qui compte — l'appareil d'un enfant. -->
+    <div class="section section-warn" id="section-bypass">
+      <div class="section-header">
+        <span class="section-title">⚠️ {{ t['devices.section_bypass'] }}</span>
+        <span class="section-count" id="count-bypass">0</span>
+      </div>
+      <p class="section-desc" id="bypass-desc">{{ t['devices.bypass_desc'] }}</p>
+      <div class="device-table" id="table-bypass">
+        <div class="empty-state" id="empty-bypass">{{ t['devices.scan_prompt'] }}</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Save bar -->
+  <div class="save-bar">
+    <span class="save-status" id="save-status"></span>
+    <button class="btn-save" id="btn-save" onclick="saveAssignments()" disabled>
+      {{ t['devices.assign_btn_save'] }}
+    </button>
+  </div>
+
+<script>
+  const T = {{ t | tojson }};
+  // Les messages de recherche portent des variables ({n}, {e}) : tr() les substitue
+  // désormais, comme sur les autres pages.
+  function tr(key, vars) {
+    let s = (T[key] !== undefined) ? T[key] : key;
+    if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+    return s;
+  }
+  // Erreur d'API : on préfère le message traduit correspondant au code renvoyé par le
+  // serveur (error.scan_not_applicable…) au texte technique français.
+  function apiError(resp, fallbackKey) {
+    const code = resp && resp.error_code;
+    if (code && T['error.' + code] !== undefined) return tr('error.' + code, (resp && resp.error_params) || {});
+    if (fallbackKey && T[fallbackKey] !== undefined) return tr(fallbackKey, { e: (resp && resp.error) || '' });
+    return (resp && resp.error) || T['error.generic'] || '';
+  }
+
+  // Pending profile changes: ip → {profile_key, mac}
+  const pending = new Map();
+
+  let allProfiles = [];
+
+  // ============================================================ //
+  //  Load                                                        //
+  // ============================================================ //
+  async function loadDevices() {
+    const btn = document.getElementById('btn-scan');
+    const icon = document.getElementById('scan-icon');
+    btn.disabled = true;
+    icon.innerHTML = '<span class="spin"></span>';
+
+    try {
+      const data = await fetch('/api/devices').then(r => r.json());
+      const errBox = document.getElementById('pihole-error');
+      if (data.pihole_error) {
+        errBox.textContent = tr('devices.pihole_unreachable') + ' ' + data.pihole_error;
+        errBox.style.display = '';
+      } else {
+        errBox.style.display = 'none';
+      }
+      allProfiles = data.profiles || [];
+      // La recherche active n'existe qu'en dns_only : en passerelle le boîtier route déjà
+      // tout le trafic des enfants et connaît leurs appareils par son propre DHCP.
+      const gateway = (data.enforcement || 'dns_only') === 'gateway';
+      const searchBtn = document.getElementById('btn-search');
+      if (searchBtn) {
+        searchBtn.style.display = gateway ? 'none' : '';
+        document.getElementById('page-sub').title = gateway ? '' : tr('devices.search_hint');
+      }
+      // En passerelle, la section entière disparaît : aucun inventaire ARP n'est produit,
+      // elle serait vide en permanence. La garder pour annoncer qu'un contournement DNS
+      // est impossible ici soulèverait surtout une question que le parent ne se posait pas.
+      document.getElementById('section-bypass').style.display = gateway ? 'none' : '';
+      renderPihole(data.pihole || []);
+      renderBypass(data.bypass || []);
+      pending.clear();
+      updateSaveBtn();
+    } catch (_) {
+      document.getElementById('save-status').textContent = tr('devices.conn_error');
+      document.getElementById('save-status').className = 'save-status err';
+    } finally {
+      btn.disabled = false;
+      icon.textContent = '↻';
+    }
+  }
+
+  // ============================================================ //
+  //  Recherche active d'appareils (arp-scan côté runner root)     //
+  // ============================================================ //
+  const _sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  async function searchDevices() {
+    const btn  = document.getElementById('btn-search');
+    const icon = document.getElementById('search-icon');
+    const box  = document.getElementById('search-status');
+    btn.disabled = true;
+    icon.innerHTML = '<span class="spin"></span>';
+    box.textContent = tr('devices.search_running');
+    box.style.display = '';
+    try {
+      const r = await fetch('/api/devices/scan', { method: 'POST' }).then(r => r.json());
+      if (!r.ok) { box.textContent = apiError(r, 'devices.search_failed'); return; }
+      // Le runner écrit un fichier horodaté ; on attend que l'horodatage CHANGE plutôt
+      // que d'attendre un délai fixe — un ancien résultat sur disque tromperait l'attente.
+      const since = r.since || '';
+      let done = null;
+      for (let i = 0; i < 45 && !done; i++) {           // ~90 s : arp-scan est borné à 60 s
+        await _sleep(2000);
+        const st = await fetch('/api/devices/scan').then(r => r.json()).catch(() => null);
+        if (st && st.updated_at && st.updated_at !== since) done = st;
+      }
+      if (!done)            box.textContent = tr('devices.search_slow');
+      else if (done.error)  box.textContent = tr('devices.search_failed', { e: done.error });
+      else                  box.textContent = tr('devices.search_done', { n: done.count });
+    } catch (_) {
+      box.textContent = tr('devices.conn_error');
+    } finally {
+      btn.disabled = false;
+      icon.textContent = '🔍';
+      await loadDevices();
+    }
+  }
+
+  // ============================================================ //
+  //  Render Pi-hole table                                        //
+  // ============================================================ //
+  function renderPihole(devices) {
+    const wrap = document.getElementById('table-pihole');
+    document.getElementById('count-pihole').textContent = devices.length;
+
+    if (!devices.length) {
+      wrap.innerHTML = `<div class="empty-state">${tr('devices.none')}</div>`;
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>${tr('devices.col_ip')}</th>
+            <th>${tr('devices.col_mac')}</th>
+            <th>${tr('devices.col_device')}</th>
+            <th>${tr('devices.col_name')}</th>
+            <th>${tr('devices.col_lastseen')}</th>
+            <th>${tr('devices.col_profile')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${devices.map(d => renderPiholeRow(d)).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  function renderPiholeRow(d) {
+    const detectedLabel = d.hostname
+      ? `<div class="cell-hostname">${esc(d.hostname)}</div>`
+      : `<div class="cell-hostname empty">${tr('devices.unknown_device')}</div>`;
+
+    const lastSeen = d.last_seen ? relativeTime(d.last_seen) : '—';
+
+    const options = [
+      `<option value="">${tr('devices.unassigned_parent')}</option>`,
+      ...allProfiles.map(p =>
+        `<option value="${esc(p.key)}" ${d.assigned_profile === p.key ? 'selected' : ''}>${esc(p.name)}</option>`
+      )
+    ].join('');
+
+    return `
+      <tr>
+        <td><span class="cell-ip">${esc(d.ip)}</span></td>
+        <td><span class="cell-mac">${esc(d.mac || '—')}</span></td>
+        <td>${detectedLabel}</td>
+        <td>
+          <input
+            class="name-input"
+            type="text"
+            value="${esc(d.custom_name || '')}"
+            placeholder="${esc(tr('devices.name_placeholder'))}"
+            data-ip="${esc(d.ip)}"
+            data-orig="${esc(d.custom_name || '')}"
+            onblur="saveName(this)"
+            onkeydown="if(event.key==='Enter'){this.blur()}"
+          >
+        </td>
+        <td><span class="cell-time">${lastSeen}</span></td>
+        <td>
+          <select class="profile-select"
+            data-ip="${esc(d.ip)}"
+            data-mac="${esc(d.mac || '')}"
+            data-orig="${esc(d.assigned_profile || '')}"
+            onchange="onProfileChange(this)">
+            ${options}
+          </select>
+        </td>
+      </tr>`;
+  }
+
+  // ============================================================ //
+  //  Render bypass table                                         //
+  // ============================================================ //
+  function renderBypass(devices) {
+    const wrap = document.getElementById('table-bypass');
+    document.getElementById('count-bypass').textContent = devices.length;
+
+    if (!devices.length) {
+      wrap.innerHTML = `<div class="empty-state">${tr('devices.bypass_none')}</div>`;
+      return;
+    }
+
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>${tr('devices.col_ip')}</th>
+            <th>${tr('devices.col_mac')}</th>
+            <th>${tr('devices.col_device')}</th>
+            <th>${tr('devices.col_note')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${devices.map(d => `
+            <tr>
+              <td><span class="cell-ip">${esc(d.ip)}</span></td>
+              <td><span class="cell-mac">${esc(d.mac || '—')}</span></td>
+              <td>${d.hostname
+                ? `<span class="cell-hostname">${esc(d.hostname)}</span>`
+                : `<span class="cell-hostname empty">${tr('devices.unknown_device')}</span>`
+              }</td>
+              <td>${d.suspect
+                ? `<span class="bypass-note">${tr('devices.bypass_note')}</span>`
+                : `<span class="cell-hostname empty">${tr('devices.bypass_note_other')}</span>`
+              }</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ============================================================ //
+  //  Name inline save                                            //
+  // ============================================================ //
+  async function saveName(input) {
+    const ip   = input.dataset.ip;
+    const orig = input.dataset.orig;
+    const name = input.value.trim();
+
+    if (name === orig) return;
+
+    input.classList.add('saving');
+    input.disabled = true;
+
+    try {
+      const res = await fetch('/api/devices/name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip, name })
+      }).then(r => r.json());
+
+      if (res.ok) {
+        input.dataset.orig = name;
+        input.value = name;
+        input.classList.remove('saving');
+        input.classList.add('saved');
+        setTimeout(() => input.classList.remove('saved'), 1500);
+      } else {
+        input.classList.remove('saving');
+        input.classList.add('error');
+        setTimeout(() => { input.classList.remove('error'); input.value = orig; input.dataset.orig = orig; }, 2000);
+      }
+    } catch (_) {
+      input.classList.remove('saving');
+      input.classList.add('error');
+      setTimeout(() => { input.classList.remove('error'); input.value = orig; input.dataset.orig = orig; }, 2000);
+    } finally {
+      input.disabled = false;
+    }
+  }
+
+  // ============================================================ //
+  //  Profile change tracking                                     //
+  // ============================================================ //
+  function onProfileChange(select) {
+    const ip  = select.dataset.ip;
+    const mac = select.dataset.mac;
+    const orig = select.dataset.orig;
+    const val  = select.value;
+
+    if (val !== orig) {
+      pending.set(ip, { profile_key: val || null, mac });
+      select.classList.add('changed');
+    } else {
+      pending.delete(ip);
+      select.classList.remove('changed');
+    }
+    updateSaveBtn();
+  }
+
+  function updateSaveBtn() {
+    const btn = document.getElementById('btn-save');
+    btn.disabled = pending.size === 0;
+  }
+
+  // ============================================================ //
+  //  Save                                                        //
+  // ============================================================ //
+  async function saveAssignments() {
+    if (!pending.size) return;
+
+    const btn = document.getElementById('btn-save');
+    const status = document.getElementById('save-status');
+    btn.disabled = true;
+    status.textContent = '…';
+    status.className = 'save-status';
+
+    let ok = 0;
+    let err = 0;
+
+    for (const [ip, { profile_key, mac }] of pending.entries()) {
+      try {
+        const res = await fetch('/api/devices/assign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip, mac, profile_key })
+        }).then(r => r.json());
+
+        if (res.ok) ok++;
+        else err++;
+      } catch (_) {
+        err++;
+      }
+    }
+
+    if (err === 0) {
+      status.textContent = `✓ ${ok} ${tr('devices.saved_ok')}`;
+      status.className = 'save-status ok';
+      pending.clear();
+      // Rafraîchir pour mettre à jour les états "orig"
+      await loadDevices();
+    } else {
+      status.textContent = tr('devices.save_error');
+      status.className = 'save-status err';
+      btn.disabled = false;
+    }
+  }
+
+  // ============================================================ //
+  //  Helpers                                                     //
+  // ============================================================ //
+  function esc(s) {
+    return String(s ?? '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');   // aligné sur index.html : couvre aussi les attributs à quotes simples
+  }
+
+  function relativeTime(iso) {
+    try {
+      const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+      if (diff < 60)   return tr('devices.time_just_now');
+      if (diff < 3600) return `${Math.floor(diff / 60)} ${tr('devices.time_min_ago')}`;
+      if (diff < 86400)return `${Math.floor(diff / 3600)} ${tr('devices.time_h_ago')}`;
+      return new Date(iso).toLocaleDateString();
+    } catch (_) {
+      return iso;
+    }
+  }
+
+  // ============================================================ //
+  //  Init                                                        //
+  // ============================================================ //
+  window.addEventListener('DOMContentLoaded', loadDevices);
+</script>
+</body>
+</html>

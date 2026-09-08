@@ -1,0 +1,397 @@
+{# Jetons de couleur du boîtier — INCLUS dans chaque page, jamais chargé séparément.
+
+   Pourquoi inline plutôt qu'un fichier /static : sans ces variables, « border: 1px solid
+   var(--line) » n'est pas seulement décoloré, il est INVALIDE — la bordure disparaît
+   entièrement, les cartes avec elle, et le tableau de bord devient une page blanche.
+   Une feuille externe rend cet effondrement possible pour une simple 404 : fichier
+   absent, service pas encore redémarré après une mise à jour, requête refusée. Le coût
+   d'inclure ces quelques kilo-octets dans chaque page est sans commune mesure avec celui
+   de ce risque, sur un boîtier servi en local.
+
+   Le script du thème suit la même règle, juste en dessous : un bouton qui ne répond pas
+   parce qu'un fichier n'est pas arrivé n'apprend rien au parent. Seul keystrength.js
+   reste dans /static — son absence retire un avertissement, elle ne casse aucun écran. #}
+<style>
+/* Une seule déclaration par couleur, ici. Les gabarits n'écrivent plus aucun code
+   hexadécimal : ils désignent un RÔLE (--card, --muted, --no-bg) et ce fichier dit quelle
+   couleur ce rôle prend dans chaque thème. C'est la seule façon d'avoir deux thèmes sans
+   écrire deux fois chaque écran.
+
+   CLAIR PAR DÉFAUT, SOMBRE SI LE SYSTÈME LE DIT, ET LE CHOIX DU PARENT L'EMPORTE.
+   Trois blocs, dans cet ordre : :root donne le thème clair ; prefers-color-scheme bascule
+   en sombre pour qui a réglé son appareil ainsi, sauf si le parent a demandé le clair ;
+   [data-theme="dark"] applique un choix manuel de sombre même sur un appareil en clair.
+
+   Les valeurs SOMBRES sont exactement les couleurs que le boîtier affichait avant
+   l'introduction des thèmes : le mode sombre est inchangé, au caractère près. Quelques
+   jetons se ressemblent beaucoup (--no-bg, --no-bg-2, --no-bg-3) ; ils gardent les nuances
+   distinctes de l'original plutôt que d'uniformiser en douce un rendu que personne n'a
+   demandé de changer.
+
+   AJOUTER UNE COULEUR : ajoutez le jeton dans les TROIS blocs. Un jeton défini seulement
+   dans le premier sortirait en clair sur fond sombre — l'erreur ne se voit pas chez qui
+   développe en clair. */
+
+:root {
+  color-scheme: light;
+  /* Quelle icône le bouton montre : celle du thème vers lequel il bascule. */
+  --icon-sun: none;
+  --icon-moon: inline;
+
+  /* Surfaces */
+  --bg: #eef2f7;
+  --card: #ffffff;
+  --sunken: #f3f6fa;
+  --sunken-2: #f3f6fa;
+  --sunken-3: #f1f5fa;
+  --line: #d7dfea;
+  --line-strong: #c1cbd9;
+  --line-subtle: #e6ebf3;
+  --line-card: #e2e8f1;
+  --row-hover: #f5f8fc;
+
+  /* Texte */
+  --ink: #172033;
+  --ink-strong: #111827;
+  --ink-title: #111827;
+  --ink-soft: #334155;
+  --muted: #5f6b7a;
+  --faint: #5b6573;
+  --dim: #666f7e;
+  --dimmer: #656d7b;
+
+  /* Accents */
+  --brand: #0369a1;
+  --brand-ink: #ffffff;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-dark: #1e40af;
+  --accent: #235fe1;
+  --accent-soft: #1d4ed8;
+  --sky: #075985;
+  --indigo: #4f46e5;
+
+  /* Vert — ce qui va bien */
+  --ok: #147d3b;
+  --ok-strong: #147d3b;
+  --ok-ink: #065f46;
+  --ok-bg: #ecfdf5;
+  --ok-bg-2: #ecfdf5;
+  --ok-border: #a7f3d0;
+
+  /* Rouge — ce qui bloque ou alerte */
+  --no: #d32424;
+  --no-strong: #b91c1c;
+  --no-ink: #991b1b;
+  --no-ink-2: #b91c1c;
+  --no-bg: #fef2f2;
+  --no-bg-2: #fef2f2;
+  --no-bg-3: #fef2f2;
+  --no-border: #fecaca;
+  --no-border-2: #fca5a5;
+
+  /* Ambre — ce qui demande attention */
+  --warn: #b05108;
+  --warn-2: #92400e;
+  --warn-strong: #9d6006;
+  --warn-bg: #fffbeb;
+  --warn-bg-2: #fff7ed;
+  --warn-bg-3: #fffbeb;
+  --warn-border: #fde68a;
+  --warn-border-2: #fed7aa;
+  --warn-border-3: #fbbf24;
+
+  /* Violet — mode permissif */
+  --violet: #7c3aed;
+  --violet-2: #6d28d9;
+  --violet-bg: #f5f3ff;
+  --violet-border: #ddd6fe;
+
+  /* Bleus composés — information, mode travail, surlignage */
+  --info-bg: #eff6ff;
+  --info-border: #bfdbfe;
+  --work-bg: #dbeafe;
+  --work-border: #bfdbfe;
+  --highlight: #dbeafe;
+  --highlight-line: #e5eaf2;
+
+  /* Divers */
+  --orange: #c2410c;
+  --orange-bg: #fff7ed;
+  --orange-border: #fed7aa;
+  --grey-bg: #e5e7eb;
+  --grey-ink: #374151;
+  --on-color: #ffffff;
+  --on-primary: #ffffff;
+  --card-shadow: 0 1px 2px rgba(23,32,51,.05), 0 8px 24px rgba(23,32,51,.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --icon-sun: inline;
+    --icon-moon: none;
+
+    /* Surfaces */
+    --bg: #0f172a;
+    --card: #1e293b;
+    --sunken: #0f172a;
+    --sunken-2: #0b1220;
+    --sunken-3: #0c1322;
+    --line: #334155;
+    --line-strong: #475569;
+    --line-subtle: #0f172a;
+    --line-card: #1e293b;
+    --row-hover: #0f172a44;
+
+    /* Texte */
+    --ink: #e2e8f0;
+    --ink-strong: #f8fafc;
+    --ink-title: #f1f5f9;
+    --ink-soft: #cbd5e1;
+    --muted: #94a3b8;
+    --faint: #64748b;
+    --dim: #475569;
+    --dimmer: #334155;
+
+    /* Accents */
+    --brand: #38bdf8;
+    --brand-ink: #04283a;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --primary-dark: #1d4ed8;
+    --accent: #60a5fa;
+    --accent-soft: #93c5fd;
+    --sky: #7dd3fc;
+    --indigo: #6366f1;
+
+    /* Vert — ce qui va bien */
+    --ok: #4ade80;
+    --ok-strong: #22c55e;
+    --ok-ink: #86efac;
+    --ok-bg: #052e16;
+    --ok-bg-2: #052e1a;
+    --ok-border: #14532d;
+
+    /* Rouge — ce qui bloque ou alerte */
+    --no: #f87171;
+    --no-strong: #ef4444;
+    --no-ink: #fecaca;
+    --no-ink-2: #fca5a5;
+    --no-bg: #450a0a;
+    --no-bg-2: #2a0f0f;
+    --no-bg-3: #310c0c;
+    --no-border: #7f1d1d;
+    --no-border-2: #b91c1c;
+
+    /* Ambre — ce qui demande attention */
+    --warn: #fbbf24;
+    --warn-2: #fcd34d;
+    --warn-strong: #f59e0b;
+    --warn-bg: #332006;
+    --warn-bg-2: #451a03;
+    --warn-bg-3: #2a2109;
+    --warn-border: #78500a;
+    --warn-border-2: #78350f;
+    --warn-border-3: #a16207;
+
+    /* Violet — mode permissif */
+    --violet: #c084fc;
+    --violet-2: #8b5cf6;
+    --violet-bg: #2e1065;
+    --violet-border: #581c87;
+
+    /* Bleus composés — information, mode travail, surlignage */
+    --info-bg: #0b2436;
+    --info-border: #1e4b63;
+    --work-bg: #0c1a4b;
+    --work-border: #1e3a8a;
+    --highlight: #1e3a5f;
+    --highlight-line: #1e3a5f22;
+
+    /* Divers */
+    --orange: #fb923c;
+    --orange-bg: #431407;
+    --orange-border: #c2410c;
+    --grey-bg: #374151;
+    --grey-ink: #d1d5db;
+    --on-color: #eff6ff;
+    --on-primary: #ffffff;
+    --card-shadow: none;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --icon-sun: inline;
+  --icon-moon: none;
+
+  /* Surfaces */
+  --bg: #0f172a;
+  --card: #1e293b;
+  --sunken: #0f172a;
+  --sunken-2: #0b1220;
+  --sunken-3: #0c1322;
+  --line: #334155;
+  --line-strong: #475569;
+  --line-subtle: #0f172a;
+  --line-card: #1e293b;
+  --row-hover: #0f172a44;
+
+  /* Texte */
+  --ink: #e2e8f0;
+  --ink-strong: #f8fafc;
+  --ink-title: #f1f5f9;
+  --ink-soft: #cbd5e1;
+  --muted: #94a3b8;
+  --faint: #64748b;
+  --dim: #475569;
+  --dimmer: #334155;
+
+  /* Accents */
+  --brand: #38bdf8;
+  --brand-ink: #04283a;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-dark: #1d4ed8;
+  --accent: #60a5fa;
+  --accent-soft: #93c5fd;
+  --sky: #7dd3fc;
+  --indigo: #6366f1;
+
+  /* Vert — ce qui va bien */
+  --ok: #4ade80;
+  --ok-strong: #22c55e;
+  --ok-ink: #86efac;
+  --ok-bg: #052e16;
+  --ok-bg-2: #052e1a;
+  --ok-border: #14532d;
+
+  /* Rouge — ce qui bloque ou alerte */
+  --no: #f87171;
+  --no-strong: #ef4444;
+  --no-ink: #fecaca;
+  --no-ink-2: #fca5a5;
+  --no-bg: #450a0a;
+  --no-bg-2: #2a0f0f;
+  --no-bg-3: #310c0c;
+  --no-border: #7f1d1d;
+  --no-border-2: #b91c1c;
+
+  /* Ambre — ce qui demande attention */
+  --warn: #fbbf24;
+  --warn-2: #fcd34d;
+  --warn-strong: #f59e0b;
+  --warn-bg: #332006;
+  --warn-bg-2: #451a03;
+  --warn-bg-3: #2a2109;
+  --warn-border: #78500a;
+  --warn-border-2: #78350f;
+  --warn-border-3: #a16207;
+
+  /* Violet — mode permissif */
+  --violet: #c084fc;
+  --violet-2: #8b5cf6;
+  --violet-bg: #2e1065;
+  --violet-border: #581c87;
+
+  /* Bleus composés — information, mode travail, surlignage */
+  --info-bg: #0b2436;
+  --info-border: #1e4b63;
+  --work-bg: #0c1a4b;
+  --work-border: #1e3a8a;
+  --highlight: #1e3a5f;
+  --highlight-line: #1e3a5f22;
+
+  /* Divers */
+  --orange: #fb923c;
+  --orange-bg: #431407;
+  --orange-border: #c2410c;
+  --grey-bg: #374151;
+  --grey-ink: #d1d5db;
+  --on-color: #eff6ff;
+  --on-primary: #ffffff;
+  --card-shadow: none;
+}
+
+/* Bouton de thème — identique sur les cinq écrans, d'où sa présence ici plutôt que
+   recopié dans chaque gabarit. Il n'apparaît que si JavaScript a posé la classe « js »
+   sur <html> : sans JS il ne servirait à rien, la préférence système décidant seule. */
+.theme-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.js .theme-btn { display: inline-flex; }
+.theme-btn:hover { color: var(--ink); border-color: var(--line-strong); }
+.theme-btn .icon-sun  { display: var(--icon-sun); }
+.theme-btn .icon-moon { display: var(--icon-moon); }
+</style>
+
+<script>
+/* Thème : appliqué AVANT le premier rendu, et bouton câblé dans le même souffle.
+
+   TOUT est inline, comme les jetons ci-dessus, et pour la même raison : un fichier
+   externe peut ne pas arriver — service pas encore redémarré après une mise à jour,
+   requête refusée, 404 — et le parent se retrouve alors avec un bouton qui ne répond
+   pas, sans rien pour le lui expliquer. C'est exactement ce qui s'est produit.
+
+   Le placement dans le <head> n'est pas un détail : plus bas, la page s'afficherait en
+   clair puis basculerait sous les yeux du parent à chaque chargement. La classe « js »
+   posée ici est aussi ce qui rend le bouton visible : sans JavaScript il ne servirait à
+   rien, la préférence système décidant seule. */
+(function () {
+  var KEY = "protectado_theme";
+  var root = document.documentElement;
+  root.classList.add("js");
+  try {
+    var stored = localStorage.getItem(KEY);
+    if (stored === "dark" || stored === "light") root.setAttribute("data-theme", stored);
+  } catch (e) {}
+
+  var system = window.matchMedia("(prefers-color-scheme: dark)");
+
+  function current() {
+    return root.getAttribute("data-theme") || (system.matches ? "dark" : "light");
+  }
+  function announce(btn) {
+    btn.setAttribute("aria-pressed", current() === "dark" ? "true" : "false");
+  }
+  function init() {
+    var btn = document.getElementById("theme-toggle");
+    if (!btn) return;
+    announce(btn);
+    btn.addEventListener("click", function () {
+      var next = current() === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+      announce(btn);
+    });
+    // Tant que le parent n'a rien choisi, le thème suit le système : le bouton doit
+    // suivre aussi, sinon il annonce l'inverse de ce qui est à l'écran.
+    var follow = function () {
+      var s = null;
+      try { s = localStorage.getItem(KEY); } catch (e) {}
+      if (!s) announce(btn);
+    };
+    if (system.addEventListener) system.addEventListener("change", follow);
+    else if (system.addListener) system.addListener(follow);
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
