@@ -1,0 +1,33 @@
+[Unit]
+Description=Protectado — Agent IA (nono sandbox)
+After=network.target pihole-FTL.service protectado-runner.service
+Requires=protectado-runner.service
+
+[Service]
+Type=simple
+User=__USER__
+# Accès en écriture à la file d'actions (/tmp/fw-queue, root:protectado-queue 2770).
+# Déclaré ICI et pas seulement via « usermod -aG » : les groupes supplémentaires sont
+# fixés au démarrage du processus, donc un boîtier mis à jour sans nouvelle session
+# n'héritait pas du groupe et le dashboard ne pouvait plus rien mettre en file
+# (assistant bloqué sur « recherche des réseaux » sans aucune erreur visible).
+SupplementaryGroups=protectado-queue
+WorkingDirectory=__WORKDIR__
+# --sandbox-policy landlock : la politique RÉSEAU doit être portée par Landlock, pas par
+# le mode « auto ». En auto, nono complète Landlock d'une base seccomp STATIQUE pour le
+# réseau, et une base statique ne sait pas exprimer « ce port oui, celui-là non » : elle
+# laisse passer le proxy et refuse tout le reste, y compris ce que le profil autorise
+# noir sur blanc. Concrètement, le dashboard se voyait refuser le bind sur 0.0.0.0:8080
+# ET l'appel à l'API Pi-hole sur localhost:81, alors que la bannière de nono affichait
+# ces ports comme accordés. En mode landlock, les règles par port sont réellement
+# appliquées et le profil redevient la source de vérité.
+# Le mode échoue au démarrage si le noyau ne peut pas satisfaire les restrictions réseau
+# sans seccomp (noyau sans Landlock, ou ABI < V4). C'est voulu : mieux vaut un service
+# qui refuse de démarrer en le disant qu'un boîtier qui semble tourner sans sandbox.
+ExecStart=nono run --sandbox-policy landlock --read __WORKDIR__ --profile /etc/protectado/agent.json -- __WORKDIR__/.venv/bin/python dashboard.py
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

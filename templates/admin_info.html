@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ t['admin_info.title'] }}</title>
+<style>
+  :root { --bg:#0f172a; --card:#1e293b; --ink:#e2e8f0; --muted:#94a3b8;
+          --brand:#38bdf8; --line:#334155; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); min-height:100vh;
+         display:flex; align-items:center; justify-content:center; padding:20px;
+         font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; line-height:1.5; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px;
+          padding:26px 22px; max-width:420px; width:100%; text-align:center; }
+  h1 { font-size:1.3rem; margin:0 0 4px; }
+  .lead { color:var(--muted); font-size:.9rem; margin:0 0 18px; }
+  .from { color:var(--muted); font-size:.85rem; margin:0 0 8px; }
+  .ip { font-size:1.5rem; font-weight:800; color:var(--brand); background:#0b1220;
+        border:1px dashed var(--brand); border-radius:12px; padding:16px; word-break:break-all; }
+  /* Repli : même encadré, plus discret — le nom reste l'adresse de référence. */
+  .ip.alt { font-size:1.05rem; font-weight:600; color:var(--muted); border-style:dotted;
+            border-color:var(--line); padding:10px; }
+  .from.alt { margin-top:14px; }
+  .bookmark { color:#7dd3fc; font-size:.85rem; margin:16px 0 0; }
+  .note { color:var(--muted); font-size:.78rem; margin:18px 0 0; padding-top:14px;
+          border-top:1px solid var(--line); }
+  .card { text-align:left; }
+  .card > h1, .card > .lead, .card > .from, .card > .ip, .card > .bookmark { text-align:center; }
+  .sec { margin-top:20px; padding-top:16px; border-top:1px solid var(--line); }
+  .sec h2 { font-size:.95rem; margin:0 0 8px; }
+  .mode { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; font-size:1.05rem;
+          font-weight:700; }
+  .mode .until { font-size:.82rem; font-weight:400; color:var(--muted); }
+  .slots { list-style:none; padding:0; margin:8px 0 0; }
+  .slots li { display:flex; justify-content:space-between; gap:12px; font-size:.85rem;
+              padding:5px 0; border-bottom:1px solid #0f172a; }
+  .slots .m { color:var(--muted); }
+  .priv { color:var(--muted); font-size:.82rem; margin:6px 0 0; }
+  /* Semaine en lecture seule : une ligne par jour, les plages en pastilles. Une grille
+     heures × jours ne tient pas sur le téléphone d'un enfant, et les plages ne sont pas
+     alignées d'un jour à l'autre — la lecture par jour dit la même chose sans mentir. */
+  .week { margin:10px 0 0; }
+  .wday { display:flex; gap:10px; align-items:flex-start; padding:6px 0;
+          border-bottom:1px solid #0f172a; }
+  .wday:last-child { border-bottom:0; }
+  .wday .d { flex:0 0 34px; font-size:.78rem; color:var(--muted); padding-top:2px; }
+  .wday.today .d { color:var(--brand); font-weight:700; }
+  .wday .rng { display:flex; flex-wrap:wrap; gap:5px; }
+  .chip { display:inline-block; border-radius:9999px; padding:2px 8px; font-size:.72rem;
+          font-weight:600; white-space:nowrap; }
+  .chip .h { font-weight:400; opacity:.85; }
+  .wnone { color:#475569; font-size:.75rem; padding-top:2px; }
+  .badge { display:inline-block; border-radius:9999px; padding:2px 9px; font-size:.72rem;
+           font-weight:700; }
+  .b-blocked{background:#450a0a;color:#f87171} .b-work{background:#0c1a4b;color:#60a5fa}
+  .b-permissive{background:#2e1065;color:#c084fc} .b-free{background:#052e16;color:#4ade80}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>🛡️ {{ t['admin_info.title'] }}</h1>
+    <p class="lead">{{ t['admin_info.lead_child'] }}</p>
+
+    <!-- 1. L'accès du moment. C'est la question que l'enfant se pose en arrivant ici —
+         « pourquoi ça ne marche pas ? » — elle passe donc avant tout le reste.
+         Rempli seulement si l'appareil est rattaché à un profil. -->
+    <div class="sec" id="mine" style="display:none">
+      <h2 id="mine-title">{{ t['child.my_access'] }}</h2>
+      <div class="mode">
+        <span id="mode-badge" class="badge"></span>
+        <span class="until" id="mode-until"></span>
+      </div>
+      <ul class="slots" id="today-slots"></ul>
+    </div>
+
+    <!-- 2. La semaine, en lecture seule. Uniquement le profil de CET appareil : la page
+         est servie sans authentification à tout le réseau enfants. -->
+    <div class="sec" id="week-sec" style="display:none">
+      <h2>{{ t['child.week_title'] }}</h2>
+      <div class="week" id="week"></div>
+    </div>
+
+    <!-- 3. Rappel du portail parent. -->
+    <div class="sec">
+      <h2>{{ t['admin_info.lead'] }}</h2>
+      <p class="from">{{ t['admin_info.from_home'] }}</p>
+      <div class="ip">http://protectado.local</div>
+      {% if ip %}
+        <p class="from alt">{{ t['admin_info.ip_fallback'] }}</p>
+        <div class="ip alt">http://{{ ip }}</div>
+      {% endif %}
+      <p class="bookmark">⭐ {{ t['admin_info.bookmark'] }}</p>
+      <p class="note">{{ t['admin_info.note'] }}</p>
+    </div>
+
+    <!-- 4. Ce qui est enregistré. -->
+    <div class="sec">
+      <h2>{{ t['child.privacy_title'] }}</h2>
+      <p class="priv">{{ t['child.privacy_records'] }}</p>
+      <p class="priv" id="retention"></p>
+      <p class="priv" id="sharing"></p>
+    </div>
+  </div>
+
+<script>
+// Page servie SANS authentification (être sur le réseau enfants suffit). Elle n'affiche
+// que des règles et une politique — aucune donnée de navigation. Tout ce qui vient de
+// l'API est échappé : les valeurs traversent le réseau et rien ne garantit leur forme.
+const T = {{ t | tojson }};
+function esc(x){ return String(x===null||x===undefined?'':x)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function tr(k, vars){ let s = (T[k]!==undefined) ? T[k] : k;
+  if(vars) for(const n in vars) s = s.split('{'+n+'}').join(vars[n]);
+  return s; }
+
+const DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+const MODE_KEY = { blocked:'mode.blocked', work:'mode.work',
+                   permissive:'mode.permissive', free:'mode.free', normal:'mode.normal' };
+
+(async () => {
+  let d;
+  try { d = await (await fetch('/api/child/status', {cache:'no-store'})).json(); }
+  catch(e){ return; }
+
+  document.getElementById('retention').textContent =
+    d.retention_days > 0 ? tr('child.retention', { n: d.retention_days })
+                         : T['child.retention_unlimited'];
+  document.getElementById('sharing').textContent =
+    d.share_with_ai ? T['child.sharing_on'] : T['child.sharing_off'];
+
+  if (!d.recognized) return;
+
+  document.getElementById('mine').style.display = '';
+  document.getElementById('mine-title').textContent = tr('child.my_access_named', { name: d.name });
+
+  const badge = document.getElementById('mode-badge');
+  badge.className = 'badge b-' + String(d.mode || '').replace(/[^a-z]/g, '');
+  badge.textContent = T[MODE_KEY[d.mode]] || esc(d.mode || '');
+  document.getElementById('mode-until').textContent =
+    d.slot_end ? tr('child.until', { time: d.slot_end }) : '';
+
+  const list = document.getElementById('today-slots');
+  list.innerHTML = (d.today || []).length
+    ? d.today.map(s => `<li><span>${esc(s.start)} – ${esc(s.end)}</span>`
+        + `<span class="m">${esc(T[MODE_KEY[s.mode]] || s.mode)}</span></li>`).join('')
+    : `<li><span class="m">${esc(T['child.no_slot_today'])}</span></li>`;
+
+  // Semaine — lecture seule : rien n'est cliquable, l'enfant constate la règle, il ne
+  // la négocie pas ici. Les jours sans plage sont montrés aussi : une case vide est une
+  // information, pas un trou dans l'affichage.
+  const week = d.week || {};
+  const box = document.getElementById('week');
+  box.innerHTML = DAYS.map(day => {
+    const slots = week[day] || [];
+    const chips = slots.length
+      ? slots.map(s => `<span class="chip b-${String(s.mode || '').replace(/[^a-z]/g, '')}">`
+          + `<span class="h">${esc(s.start)}–${esc(s.end)}</span> `
+          + `${esc(T[MODE_KEY[s.mode]] || s.mode)}</span>`).join('')
+      : `<span class="wnone">${esc(T['child.no_slot'])}</span>`;
+    return `<div class="wday${day === d.today_key ? ' today' : ''}">`
+      + `<span class="d">${esc((T['profiles.day.' + day] || day).substring(0, 3))}</span>`
+      + `<span class="rng">${chips}</span></div>`;
+  }).join('');
+  document.getElementById('week-sec').style.display = '';
+})();
+</script>
+</body>
+</html>

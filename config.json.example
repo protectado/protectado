@@ -1,0 +1,51 @@
+{
+  "language": "fr",
+  "dashboard_password": "REMPLACER_PAR_MOT_DE_PASSE",
+  "pihole": {
+    "host": "http://localhost:81",
+    "password": "REMPLACER_PAR_TON_MOT_DE_PASSE"
+  },
+  "network": {
+    "gateway": "192.168.0.1",
+    "subnet": "192.168.0.0/24",
+    "enforcement": "dns_only",
+    "new_device_grace_hours": 24
+  },
+  "openrouter": {
+    "api_key": "REMPLACER_PAR_CLE_OPENROUTER",
+    "model": "anthropic/claude-sonnet-4-5"
+  },
+  "profiles": {
+    "alice": {
+      "name": "Alice",
+      "age": 12,
+      "devices": [],
+      "schedule": {
+        "weekday": [
+          {"start": "00:00", "end": "05:30", "mode": "blocked"},
+          {"start": "05:30", "end": "08:00", "mode": "work"},
+          {"start": "08:00", "end": "16:00", "mode": "blocked"},
+          {"start": "16:00", "end": "16:30", "mode": "permissive"},
+          {"start": "16:30", "end": "19:30", "mode": "work"},
+          {"start": "19:30", "end": "22:00", "mode": "permissive"},
+          {"start": "22:00", "end": "23:59", "mode": "blocked"}
+        ],
+        "weekend": [
+          {"start": "00:00", "end": "10:00", "mode": "blocked"},
+          {"start": "10:00", "end": "12:00", "mode": "work"},
+          {"start": "12:00", "end": "16:00", "mode": "permissive"},
+          {"start": "16:00", "end": "19:30", "mode": "work"},
+          {"start": "19:30", "end": "22:00", "mode": "permissive"},
+          {"start": "22:00", "end": "23:59", "mode": "blocked"}
+        ]
+      }
+    },
+    "monitoring": {
+      "name": "Monitoring",
+      "age": null,
+      "mode": "monitoring",
+      "devices": [],
+      "comment": "Passive monitoring — no blocking. Ignored if devices is empty."
+    }
+  }
+}
