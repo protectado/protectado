@@ -1,0 +1,14 @@
+[Unit]
+Description=Protectado — mise à jour depuis git
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/protectado-update
+# ExecStopPost= et non ExecStartPost= : pour un Type=oneshot, ExecStartPost n'est PAS
+# exécuté quand ExecStart échoue. Le déclencheur survivait donc à un échec, et
+# protectado-update.path (PathExists=) relançait l'unité en boucle dès qu'elle
+# redevenait inactive. ExecStopPost= s'exécute dans tous les cas, succès ou échec.
+ExecStopPost=/bin/rm -f __WORKDIR__/data/update.trigger
+StandardOutput=file:__WORKDIR__/data/update.log
+StandardError=file:__WORKDIR__/data/update.log

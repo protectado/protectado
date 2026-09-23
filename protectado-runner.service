@@ -1,0 +1,20 @@
+[Unit]
+Description=Protectado — Action Runner (privilégié, hors sandbox)
+# protectado-ap.service : en posture passerelle, l'effecteur ne peut se déclarer actif que
+# si wlan_ap est DÉJÀ en mode AP. Sans cet ordre, le runner gagnait la course contre
+# hostapd au boot et se croyait sans matériel. L'unité est absente en dns_only : After
+# sur une unité inexistante est simplement ignoré. Le runner ne s'y fie pas pour autant,
+# il revérifie périodiquement (cf. _rearm_gateway).
+After=network.target protectado-ap.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=__WORKDIR__
+ExecStart=__WORKDIR__/.venv/bin/python action_runner.py
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
