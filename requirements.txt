@@ -1,0 +1,16 @@
+# Dépendances DIRECTES, lisibles. Les boîtiers n'installent pas ce fichier mais
+# requirements.lock (versions exactes), qui en est généré : voir son en-tête.
+openai>=1.30.0
+fastapi>=0.110.0
+uvicorn>=0.27.0
+jinja2>=3.1.0
+requests>=2.31.0
+python-multipart>=0.0.9
+
+# ── Développement uniquement ────────────────────────────────────────────────────
+# Rien dans le produit n'importe pytest : il ne sert qu'à la suite de tests, sur une
+# machine de développement. La ligne est laissée en commentaire parce que
+# requirements.lock est généré depuis ce fichier : une ligne active embarquerait pytest
+# sur chaque Pi sans qu'aucun code ne s'en serve.
+# Sur une machine de développement : pip install pytest
+# pytest

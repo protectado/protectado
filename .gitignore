@@ -1,0 +1,22 @@
+# Runtime data — never commit
+config.json
+familywatch.db
+*.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Logs
+*.log
+
+# Documents de conception internes — NE JAMAIS publier : décrire précisément comment on
+# détecte les contournements revient à publier la marche à suivre pour y échapper.
+# Ce motif les exclut du dépôt public. Ils ne sont suivis par AUCUN dépôt git : ils
+# vivent hors de l'arbre, sur la machine de développement. La version précédente de ce
+# commentaire annonçait un dépôt privé « protectado-backend » qui ne les héberge pas, et
+# cette phrase a déjà conduit à ranger un document au mauvais endroit.
+docs/design/

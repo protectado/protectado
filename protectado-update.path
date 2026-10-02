@@ -1,0 +1,13 @@
+[Unit]
+Description=Protectado — surveillance du déclencheur de mise à jour
+# Pas de After=protectado-agent.service : un .path a Before=paths.target par défaut,
+# donc l'ordonner après l'agent crée un CYCLE (paths.target → update.path → agent →
+# runner → network.target → basic.target → paths.target). Le watcher démarre tôt, sans
+# ordre vis-à-vis de l'app : il attend juste l'apparition du fichier trigger.
+
+[Path]
+PathExists=__WORKDIR__/data/update.trigger
+Unit=protectado-update.service
+
+[Install]
+WantedBy=multi-user.target
