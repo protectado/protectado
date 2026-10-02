@@ -1,0 +1,221 @@
+{
+  "version": "2026-09-30",
+  "note": "Services que le parent nomme, et domaines qui les composent. Ce fichier est de la DONNÉE : il change parce qu'un service ajoute un domaine de diffusion, pas parce que le produit évolue. Il se modifie sans connaître Python, et un test refuse de le publier s'il est malformé.",
+  "format": "Chaque service porte un libellé lisible (non traduit : « Netflix » s'écrit Netflix partout), une catégorie, et ses domaines RACINES. Les domaines de livraison comptent autant que la façade : ce sont eux qui portent le volume.",
+  "services": {
+    "coursera": {
+      "label": "Coursera",
+      "category": "education",
+      "domains": [
+        "coursera.org"
+      ]
+    },
+    "discord": {
+      "label": "Discord",
+      "category": "social",
+      "domains": [
+        "discord.com",
+        "discord.gg",
+        "discordapp.com",
+        "discordcdn.com"
+      ]
+    },
+    "duolingo": {
+      "label": "Duolingo",
+      "category": "education",
+      "domains": [
+        "duolingo.com"
+      ]
+    },
+    "facebook": {
+      "label": "Facebook",
+      "category": "social",
+      "domains": [
+        "facebook.com",
+        "fbcdn.net"
+      ]
+    },
+    "google": {
+      "label": "Google",
+      "category": "work",
+      "domains": [
+        "google.com"
+      ]
+    },
+    "instagram": {
+      "label": "Instagram",
+      "category": "social",
+      "domains": [
+        "cdninstagram.com",
+        "instagram.com"
+      ]
+    },
+    "khan": {
+      "label": "Khan Academy",
+      "category": "education",
+      "domains": [
+        "khanacademy.org"
+      ]
+    },
+    "microsoft": {
+      "label": "Microsoft 365",
+      "category": "work",
+      "domains": [
+        "microsoft.com",
+        "office.com",
+        "onedrive.com",
+        "sharepoint.com"
+      ]
+    },
+    "netflix": {
+      "label": "Netflix",
+      "category": "entertainment",
+      "domains": [
+        "netflix.com",
+        "nflxso.net",
+        "nflxvideo.net"
+      ]
+    },
+    "notion": {
+      "label": "Notion",
+      "category": "work",
+      "domains": [
+        "notion.so"
+      ]
+    },
+    "onlyfans": {
+      "label": "OnlyFans",
+      "category": "adult",
+      "domains": [
+        "onlyfans.com"
+      ]
+    },
+    "quizlet": {
+      "label": "Quizlet",
+      "category": "education",
+      "domains": [
+        "quizlet.com"
+      ]
+    },
+    "reddit": {
+      "label": "Reddit",
+      "category": "social",
+      "domains": [
+        "redd.it",
+        "reddit.com",
+        "redditmedia.com"
+      ]
+    },
+    "signal": {
+      "label": "Signal",
+      "category": "social",
+      "domains": [
+        "signal.me",
+        "signal.org",
+        "whispersystems.org"
+      ]
+    },
+    "snapchat": {
+      "label": "Snapchat",
+      "category": "social",
+      "domains": [
+        "bitmoji.com",
+        "sc-cdn.net",
+        "snap.com",
+        "snapchat.com",
+        "snapkit.com"
+      ]
+    },
+    "soundcloud": {
+      "label": "SoundCloud",
+      "category": "entertainment",
+      "domains": [
+        "sndcdn.com",
+        "soundcloud.com"
+      ]
+    },
+    "spotify": {
+      "label": "Spotify",
+      "category": "entertainment",
+      "domains": [
+        "audio-ak-spotify-com.akamaized.net",
+        "scdn.co",
+        "spotify.com",
+        "spotifycdn.com"
+      ]
+    },
+    "telegram": {
+      "label": "Telegram",
+      "category": "social",
+      "domains": [
+        "cdn-telegram.org",
+        "t.me",
+        "telegram-cdn.org",
+        "telegram.org"
+      ]
+    },
+    "tiktok": {
+      "label": "TikTok",
+      "category": "social",
+      "domains": [
+        "byteoversea.com",
+        "musical.ly",
+        "tiktok.com",
+        "tiktokcdn.com"
+      ]
+    },
+    "twitch": {
+      "label": "Twitch",
+      "category": "entertainment",
+      "domains": [
+        "jtvnw.net",
+        "ttvnw.net",
+        "twitch.tv"
+      ]
+    },
+    "twitter": {
+      "label": "X (Twitter)",
+      "category": "social",
+      "domains": [
+        "t.co",
+        "twimg.com",
+        "twitter.com",
+        "x.com"
+      ]
+    },
+    "whatsapp": {
+      "label": "WhatsApp",
+      "category": "social",
+      "domains": [
+        "whatsapp.com",
+        "whatsapp.net"
+      ]
+    },
+    "wikipedia": {
+      "label": "Wikipédia",
+      "category": "education",
+      "domains": [
+        "wikimedia.org",
+        "wikipedia.org"
+      ]
+    },
+    "wolfram": {
+      "label": "WolframAlpha",
+      "category": "education",
+      "domains": [
+        "wolframalpha.com"
+      ]
+    },
+    "youtube": {
+      "label": "YouTube",
+      "category": "entertainment",
+      "domains": [
+        "googlevideo.com",
+        "youtu.be",
+        "youtube-nocookie.com",
+        "youtube.com",
+        "ytimg.com"
+      ]
+    }
+  }
+}
